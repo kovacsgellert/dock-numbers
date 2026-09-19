@@ -30,7 +30,7 @@ struct DockNumbers {
       print("Activating \(app.title)...")
       exit(AppActivator.activate(app) ? 0 : 1)
     }
-    print("Usage: dock-numbers [--list] [--activate <1-9,0>] [--daemon]")
+    print("Usage: dock-numbers [--list] [--activate <1-9,0>] [--daemon] [--no-accessibility]")
   }
 
   /// True when running as dock-numbers.app rather than a bare binary.
@@ -42,6 +42,9 @@ struct DockNumbers {
   static func runDaemon() {
     let app = NSApplication.shared
     app.setActivationPolicy(.accessory)
+    // TEMPORARY dev/testing hook: run the full UI without Accessibility
+    // (no event tap, no system prompt). Badges are inert in this mode.
+    let noAccessibility = CommandLine.arguments.contains("--no-accessibility")
     // Portable config wins: enforce the desired login-item state (e.g. fresh
     // machine with a copied config.yml) and apply the saved appearance.
     AppConfig.shared.reload()
@@ -81,7 +84,7 @@ struct DockNumbers {
       }
     }
 
-    guard hotkey.start() else {
+    guard noAccessibility || hotkey.start() else {
       // Launched on its own (e.g. via Finder) without Accessibility yet:
       // stay alive, prompt, and let the settings window guide the user.
       // The tap is retried whenever the app activates (see runChrome).
@@ -92,7 +95,7 @@ struct DockNumbers {
       return
     }
 
-    runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: false)
+    runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: noAccessibility)
     print("dock-numbers daemon running. Hold Option to show numbers, press 1-9/0 to switch. Ctrl+C to quit.")
     app.run()
   }
