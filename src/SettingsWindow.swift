@@ -133,18 +133,25 @@ final class SettingsWindowController: NSWindowController {
     accessButton.bezelStyle = .rounded
     stack.addArrangedSubview(section(title: "Accessibility", rows: [(nil, accessLabel), (nil, accessButton)]))
 
-    // About section.
+    // About section. Pinned to the root stack's width: a narrow footer would
+    // center its texts in itself (shifted left); full width centers them
+    // in the window.
     let footer = NSStackView()
     footer.orientation = .vertical
     footer.alignment = .centerX
     footer.spacing = 4
     footer.translatesAutoresizingMaskIntoConstraints = false
+    stack.addArrangedSubview(footer)
+    // Full width (activated once footer is in the hierarchy): a narrow footer
+    // would center its texts in itself, shifted left.
+    footer.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     let aboutCaption = NSTextField(labelWithString: "About")
+    footer.addArrangedSubview(aboutCaption)
     aboutCaption.font = .systemFont(ofSize: 13, weight: .semibold)
     aboutCaption.textColor = .secondaryLabelColor
     aboutCaption.alignment = .center
     footer.addArrangedSubview(aboutCaption)
-    let aboutName = NSTextField(labelWithString: "Made by Gellert Kovacs")
+    let aboutName = NSTextField(labelWithString: "Made by Gellért Kovács")
     aboutName.font = .systemFont(ofSize: 12)
     aboutName.textColor = .secondaryLabelColor
     aboutName.alignment = .center
@@ -196,6 +203,7 @@ final class SettingsWindowController: NSWindowController {
       if let label {
         let row = NSStackView()
         row.orientation = .horizontal
+        row.alignment = .centerY
         row.spacing = 12
         let l = NSTextField(labelWithString: label)
         l.font = .systemFont(ofSize: 13)
