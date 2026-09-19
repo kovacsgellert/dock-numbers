@@ -42,6 +42,12 @@ struct DockNumbers {
   static func runDaemon() {
     let app = NSApplication.shared
     app.setActivationPolicy(.accessory)
+    // Portable config wins: enforce the desired login-item state (e.g. fresh
+    // machine with a copied config.yml) and apply the saved appearance.
+    AppConfig.shared.reload()
+    if AppConfig.shared.startAtLogin != LaunchAtLogin.isEnabled {
+      try? LaunchAtLogin.setEnabled(AppConfig.shared.startAtLogin)
+    }
     AppAppearance.apply()
     let delegate = AppDelegate()
     app.delegate = delegate
@@ -49,14 +55,15 @@ struct DockNumbers {
     let hotkey = HotkeyManager()
     var current: [DockApp] = []
     var pendingShow: DispatchWorkItem?
-    /// Hold-to-show delay: quick Option taps (e.g. Option+letter combos) never flash badges.
-    let showDelay: TimeInterval = 0.1
 
     hotkey.onOptionDown = {
       // Resolve targets immediately so a fast Option+number still switches,
       // but only paint the badges if Option is actually being held.
       current = DockReader.runningAppItems()
       let snapshot = current
+      // Hold-to-show delay, configurable 0...500 ms: quick Option taps
+      // (e.g. Option+letter combos) never flash badges.
+      let showDelay = Double(AppConfig.shared.badgeDelayMs) / 1000.0
       let work = DispatchWorkItem { Task { await overlay.show(apps: snapshot) } }
       pendingShow = work
       DispatchQueue.main.asyncAfter(deadline: .now() + showDelay, execute: work)
@@ -101,11 +108,22 @@ struct DockNumbers {
 
     // If the tap couldn't start (no Accessibility), keep retrying on a timer:
     // granting permission in System Settings never activates us, so an
-    // activation-only retry can miss it entirely.
+    // activation-only retry can miss it entirely. The same tick reloads
+    // config.yml so hand/script edits apply without relaunching.
     // Note: `hotkey` is retained by the observer/timer blocks for the app's lifetime.
+    var lastApplied = AppConfig.shared
     Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
       if !hotkey.isRunning, hotkey.start() {
         print("Event tap started — badges enabled.")
+      }
+      AppConfig.shared.reload()
+      if AppConfig.shared != lastApplied {
+        if AppConfig.shared.startAtLogin != LaunchAtLogin.isEnabled {
+          try? LaunchAtLogin.setEnabled(AppConfig.shared.startAtLogin)
+        }
+        AppAppearance.apply()
+        updateStatusItem(settings: settings)
+        lastApplied = AppConfig.shared
       }
     }
     NotificationCenter.default.addObserver(

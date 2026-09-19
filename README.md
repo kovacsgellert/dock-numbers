@@ -35,6 +35,19 @@ swift build
 
 Releases are built automatically: pushing a version tag like `0.1.0` triggers the `Release` workflow, which packages the `.app`, builds the DMG, and attaches it to the GitHub Release.
 
+## Configuration file
+
+Settings live in `~/.config/dock-numbers/config.yml` — plain `key: value` pairs, safe to edit by hand or manage with scripts across machines:
+
+```yaml
+start_at_login: false
+show_menu_bar_icon: true
+appearance: system  # system | light | dark
+badge_delay_ms: 100  # 0...500
+```
+
+The file is created on first launch (existing installs migrate their current settings into it). Hand edits apply live within a couple of seconds, no relaunch needed. Everything is also editable from the settings window.
+
 
 ## Usage
 

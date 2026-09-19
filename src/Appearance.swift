@@ -5,11 +5,13 @@ import Cocoa
 enum AppAppearance: String, CaseIterable {
   case system, light, dark
 
-  private static let key = "appearance"
-
+  /// Backed by ~/.config/dock-numbers/config.yml via AppConfig.
   static var current: AppAppearance {
-    get { AppAppearance(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system }
-    set { UserDefaults.standard.set(newValue.rawValue, forKey: key) }
+    get { AppConfig.shared.appearance }
+    set {
+      AppConfig.shared.appearance = newValue
+      AppConfig.shared.save()
+    }
   }
 
   /// Resolve to dark or light right now (override wins, else system).
