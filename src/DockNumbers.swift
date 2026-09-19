@@ -43,6 +43,8 @@ struct DockNumbers {
     let app = NSApplication.shared
     app.setActivationPolicy(.accessory)
     AppAppearance.apply()
+    let delegate = AppDelegate()
+    app.delegate = delegate
     let overlay = OverlayManager()
     let hotkey = HotkeyManager()
     var current: [DockApp] = []
@@ -93,7 +95,15 @@ struct DockNumbers {
   static func runChrome(settings: SettingsWindowController, hotkey: HotkeyManager, forceSettings: Bool) {
     let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     if let button = statusItem.button {
-      button.image = NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: "dock-numbers")
+      button.toolTip = "dock-numbers"
+      if let url = Bundle.main.url(forResource: "menubar", withExtension: "png"),
+         let icon = NSImage(contentsOf: url) {
+        icon.isTemplate = true
+        icon.size = CGSize(width: 18, height: 18)
+        button.image = icon
+      } else {
+        button.image = NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: "dock-numbers")
+      }
     }
     let menu = NSMenu()
     let settingsItem = NSMenuItem(title: "Settings…", action: nil, keyEquivalent: "")
@@ -127,5 +137,13 @@ struct DockNumbers {
       UserDefaults.standard.set(true, forKey: launchedKey)
       DispatchQueue.main.async { settings.show() }
     }
+  }
+}
+
+private final class AppDelegate: NSObject, NSApplicationDelegate {
+  func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    // Launch from Spotlight / click on running app → show settings.
+    SettingsWindowController.shared.show()
+    return true
   }
 }
