@@ -59,26 +59,45 @@ final class SettingsWindowController: NSWindowController {
     hint.textColor = .secondaryLabelColor
     stack.addArrangedSubview(hint)
 
-    stack.addArrangedSubview(NSBox.horizontalSeparator())
+    let grid = NSGridView(numberOfColumns: 2, rows: 0)
+    grid.columnSpacing = 12
+    grid.rowSpacing = 12
+    grid.translatesAutoresizingMaskIntoConstraints = false
 
-    let loginRow = NSStackView()
-    loginRow.orientation = .horizontal
-    loginRow.alignment = .centerY
-    loginRow.spacing = 10
+    loginLabel = NSTextField(labelWithString: "Start automatically when you log in")
+    loginLabel.font = .systemFont(ofSize: 13)
     loginSwitch = NSSwitch()
     loginSwitch.target = self
     loginSwitch.action = #selector(loginToggled(_:))
-    loginRow.addArrangedSubview(loginSwitch)
-    loginLabel = NSTextField(labelWithString: "Start automatically when you log in")
-    loginLabel.font = .systemFont(ofSize: 13)
-    loginRow.addArrangedSubview(loginLabel)
-    stack.addArrangedSubview(loginRow)
+    grid.addRow(with: [loginLabel, loginSwitch])
+
+    let menubarLabel = NSTextField(labelWithString: "Show menu bar icon")
+    menubarLabel.font = .systemFont(ofSize: 13)
+    let menubarSwitch = NSSwitch()
+    self.menubarSwitch = menubarSwitch
+    menubarSwitch.target = self
+    menubarSwitch.action = #selector(menubarToggled(_:))
+    grid.addRow(with: [menubarLabel, menubarSwitch])
+
+    let themeLabel = NSTextField(labelWithString: "Appearance")
+    themeLabel.font = .systemFont(ofSize: 13)
+    let themePopup = NSPopUpButton()
+    themePopup.addItems(withTitles: AppAppearance.allCases.map(\.label))
+    themePopup.selectItem(withTitle: AppAppearance.current.label)
+    themePopup.target = self
+    themePopup.action = #selector(appearanceChanged(_:))
+    grid.addRow(with: [themeLabel, themePopup])
+
+    grid.column(at: 0).xPlacement = .trailing
+    stack.addArrangedSubview(grid)
 
     loginErrorLabel = NSTextField(labelWithString: "")
     loginErrorLabel.font = .systemFont(ofSize: 12)
     loginErrorLabel.textColor = .systemRed
     loginErrorLabel.isHidden = true
     stack.addArrangedSubview(loginErrorLabel)
+
+    stack.addArrangedSubview(NSBox.horizontalSeparator())
 
     let accessRow = NSStackView()
     accessRow.orientation = .horizontal
@@ -91,35 +110,6 @@ final class SettingsWindowController: NSWindowController {
     accessButton.bezelStyle = .rounded
     accessRow.addArrangedSubview(accessButton)
     stack.addArrangedSubview(accessRow)
-
-    let themeRow = NSStackView()
-    themeRow.orientation = .horizontal
-    themeRow.alignment = .centerY
-    themeRow.spacing = 10
-    let themeLabel = NSTextField(labelWithString: "Appearance")
-    themeLabel.font = .systemFont(ofSize: 13)
-    themeRow.addArrangedSubview(themeLabel)
-    let themePopup = NSPopUpButton()
-    themePopup.addItems(withTitles: AppAppearance.allCases.map(\.label))
-    themePopup.selectItem(withTitle: AppAppearance.current.label)
-    themePopup.target = self
-    themePopup.action = #selector(appearanceChanged(_:))
-    themeRow.addArrangedSubview(themePopup)
-    stack.addArrangedSubview(themeRow)
-
-    let menubarRow = NSStackView()
-    menubarRow.orientation = .horizontal
-    menubarRow.alignment = .centerY
-    menubarRow.spacing = 10
-    let menubarSwitch = NSSwitch()
-    self.menubarSwitch = menubarSwitch
-    menubarSwitch.target = self
-    menubarSwitch.action = #selector(menubarToggled(_:))
-    menubarRow.addArrangedSubview(menubarSwitch)
-    let menubarLabel = NSTextField(labelWithString: "Show menu bar icon")
-    menubarLabel.font = .systemFont(ofSize: 13)
-    menubarRow.addArrangedSubview(menubarLabel)
-    stack.addArrangedSubview(menubarRow)
 
     refreshAll()
     NotificationCenter.default.addObserver(
