@@ -133,12 +133,17 @@ final class SettingsWindowController: NSWindowController {
     accessButton.bezelStyle = .rounded
     stack.addArrangedSubview(section(title: "Accessibility", rows: [(nil, accessLabel), (nil, accessButton)]))
 
-    // About footer.
+    // About section.
     let footer = NSStackView()
     footer.orientation = .vertical
     footer.alignment = .centerX
-    footer.spacing = 2
+    footer.spacing = 4
     footer.translatesAutoresizingMaskIntoConstraints = false
+    let aboutCaption = NSTextField(labelWithString: "About")
+    aboutCaption.font = .systemFont(ofSize: 13, weight: .semibold)
+    aboutCaption.textColor = .secondaryLabelColor
+    aboutCaption.alignment = .center
+    footer.addArrangedSubview(aboutCaption)
     let aboutName = NSTextField(labelWithString: "Made by Gellert Kovacs")
     aboutName.font = .systemFont(ofSize: 12)
     aboutName.textColor = .secondaryLabelColor
