@@ -1,6 +1,6 @@
 # dock-numbers
 
-Hold **Option** to overlay numbered glass badges on your macOS Dock icons, then press a number to switch to that app. A minimal, keyboard-first app switcher in the spirit of [QuickDock](https://noteifyapp.com/quick-dock/).
+Hold **Option** to overlay numbered glass badges on your macOS Dock icons, then press a number to switch to that app — a minimal, keyboard-first app switcher.
 
 ## How it works
 
@@ -23,6 +23,21 @@ Under the hood: Dock icon positions come from the Accessibility API (`AXDockItem
 ```sh
 swift build
 ```
+
+## Install a released binary
+
+1. Download `dock-numbers-macos-arm64.tar.gz` from the [Releases page](https://github.com/kovacsgellert/dock-numbers/releases) and unpack it.
+2. The binary isn't notarized, so macOS will quarantine it on first run. Clear it once:
+   ```sh
+   xattr -d com.apple.quarantine dock-numbers
+   ```
+3. Grant Accessibility permission (`System Settings → Privacy & Security → Accessibility`) when prompted, then run:
+   ```sh
+   ./dock-numbers --daemon
+   ```
+
+Releases are built automatically: pushing a version tag like `0.1.0` triggers the `Release` workflow, which compiles with `swift build -c release` on Apple Silicon and attaches the tarball to the GitHub Release.
+
 
 ## Usage
 
