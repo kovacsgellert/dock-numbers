@@ -13,6 +13,7 @@ BIN="$(swift build -c release --show-bin-path --package-path "$ROOT")/dock-numbe
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/"
+cp "$ROOT/assets/dock-numbers.icns" "$ROOT/assets/menubar.png" "$APP/Contents/Resources/"
 sed -e "s/__VERSION__/$VERSION/g" "$ROOT/packaging/Info.plist" > "$APP/Contents/Info.plist"
 # Ad-hoc seal so the bundle is self-consistent (still unsigned: no notarization).
 codesign --force --deep --sign - "$APP"

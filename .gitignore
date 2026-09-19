@@ -5,6 +5,9 @@
 # Local packaging output
 dist/
 
+# Regenerable iconset (source: scripts/render-icon.swift + assets/icon-1024.png)
+assets/icon.iconset/
+
 # Xcode
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
