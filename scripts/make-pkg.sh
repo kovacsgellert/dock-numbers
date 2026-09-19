@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${VERSION:-$(git -C "$ROOT" describe --tags --always 2>/dev/null || echo 0.0.0-dev)}"
 OUT="${OUT:-$ROOT/dist}"
 APP="$OUT/dock-numbers.app"
-PKG="$OUT/dock-numbers-installer.pkg"
+PKG="$OUT/dock-numbers-$VERSION-macos-arm64.pkg"
 
 test -d "$APP" || { echo "ERROR: $APP not found, run scripts/package-app.sh first" >&2; exit 1; }
 rm -f "$PKG"
