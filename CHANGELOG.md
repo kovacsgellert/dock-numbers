@@ -2,6 +2,10 @@
 
 All notable changes to dock-numbers, oldest first.
 
+## 0.1.1
+
+- Fix `.pkg` to always install into `/Applications` (no more upgrading stray same-id copies elsewhere on disk)
+
 ## 0.1.0
 
 - Hold Option to badge Dock icons, press a number to switch apps (initial prototype)
