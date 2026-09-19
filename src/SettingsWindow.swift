@@ -15,10 +15,11 @@ final class SettingsWindowController: NSWindowController {
   private var accessButton: NSButton!
   private var loginErrorLabel: NSTextField!
   private var accessPoll: Timer?
+  private var menubarSwitch: NSSwitch!
 
   init() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 430, height: 250),
+      contentRect: NSRect(x: 0, y: 0, width: 430, height: 285),
       styleMask: [.titled, .closable],
       backing: .buffered,
       defer: false
@@ -106,6 +107,20 @@ final class SettingsWindowController: NSWindowController {
     themeRow.addArrangedSubview(themePopup)
     stack.addArrangedSubview(themeRow)
 
+    let menubarRow = NSStackView()
+    menubarRow.orientation = .horizontal
+    menubarRow.alignment = .centerY
+    menubarRow.spacing = 10
+    let menubarSwitch = NSSwitch()
+    self.menubarSwitch = menubarSwitch
+    menubarSwitch.target = self
+    menubarSwitch.action = #selector(menubarToggled(_:))
+    menubarRow.addArrangedSubview(menubarSwitch)
+    let menubarLabel = NSTextField(labelWithString: "Show menu bar icon")
+    menubarLabel.font = .systemFont(ofSize: 13)
+    menubarRow.addArrangedSubview(menubarLabel)
+    stack.addArrangedSubview(menubarRow)
+
     refreshAll()
     NotificationCenter.default.addObserver(
       self, selector: #selector(refreshAccessibility),
@@ -133,6 +148,7 @@ final class SettingsWindowController: NSWindowController {
 
   private func refreshAll() {
     loginSwitch.state = LaunchAtLogin.isEnabled ? .on : .off
+    menubarSwitch.state = ShowMenuBarIcon.isEnabled ? .on : .off
     loginErrorLabel.isHidden = true
     refreshAccessibility()
   }
@@ -146,6 +162,11 @@ final class SettingsWindowController: NSWindowController {
       loginErrorLabel.isHidden = false
       sender.state = LaunchAtLogin.isEnabled ? .on : .off
     }
+  }
+
+  @objc private func menubarToggled(_ sender: NSSwitch) {
+    ShowMenuBarIcon.setEnabled(sender.state == .on)
+    DockNumbers.updateStatusItem(settings: SettingsWindowController.shared)
   }
 
   @objc private func refreshAccessibility() {
