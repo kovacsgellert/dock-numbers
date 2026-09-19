@@ -2,6 +2,11 @@
 
 All notable changes to dock-numbers, oldest first.
 
+## 0.1.3
+
+- App icon at the top of README
+- Version number in `.dmg`/`.pkg` installer filenames
+
 ## 0.1.2
 
 - Fix settings group boxes staying dark in light mode
