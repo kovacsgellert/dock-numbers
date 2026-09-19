@@ -1,3 +1,5 @@
+<img src="assets/icon-1024.png" width="128" alt="dock-numbers icon">
+
 # dock-numbers
 
 Hold **Option** to overlay numbered glass badges on your macOS Dock icons, then press a number to switch to that app — a minimal, keyboard-first app switcher.
