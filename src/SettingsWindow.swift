@@ -101,6 +101,8 @@ final class SettingsWindowController: NSWindowController {
     delayRow.orientation = .horizontal
     delayRow.alignment = .centerY
     delayRow.spacing = 8
+    // Same row height as the switch/popup rows so the rhythm stays even.
+    delayRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 26).isActive = true
     delaySlider = NSSlider(value: 100, minValue: 0, maxValue: 500, target: self, action: #selector(delayChanged(_:)))
     delaySlider.translatesAutoresizingMaskIntoConstraints = false
     delaySlider.widthAnchor.constraint(equalToConstant: 130).isActive = true
@@ -133,19 +135,16 @@ final class SettingsWindowController: NSWindowController {
     accessButton.bezelStyle = .rounded
     stack.addArrangedSubview(section(title: "Accessibility", rows: [(nil, accessLabel), (nil, accessButton)]))
 
-    // About section. Pinned to the root stack's width: a narrow footer would
-    // center its texts in itself (shifted left); full width centers them
-    // in the window.
+    // About section, laid out like the others: leading-aligned under
+    // its caption instead of centered.
     let footer = NSStackView()
     footer.orientation = .vertical
-    footer.alignment = .centerX
+    footer.alignment = .leading
     footer.spacing = 4
     footer.translatesAutoresizingMaskIntoConstraints = false
-    stack.addArrangedSubview(footer)
-    // Full width (activated once footer is in the hierarchy): a narrow footer
-    // would center its texts in itself, shifted left.
-    footer.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     let aboutCaption = NSTextField(labelWithString: "About")
+    aboutCaption.font = .systemFont(ofSize: 13, weight: .semibold)
+    aboutCaption.textColor = .secondaryLabelColor
     footer.addArrangedSubview(aboutCaption)
     aboutCaption.font = .systemFont(ofSize: 13, weight: .semibold)
     aboutCaption.textColor = .secondaryLabelColor
@@ -154,13 +153,11 @@ final class SettingsWindowController: NSWindowController {
     let aboutName = NSTextField(labelWithString: "Made by Gellért Kovács")
     aboutName.font = .systemFont(ofSize: 12)
     aboutName.textColor = .secondaryLabelColor
-    aboutName.alignment = .center
     footer.addArrangedSubview(aboutName)
     let repoURL = URL(string: "https://github.com/kovacsgellert/dock-numbers")!
     let repoLink = NSTextField(wrappingLabelWithString: "")
     repoLink.isEditable = false
     repoLink.isSelectable = true
-    repoLink.alignment = .center
     repoLink.preferredMaxLayoutWidth = 360
     repoLink.attributedStringValue = NSAttributedString(
       string: "github.com/kovacsgellert/dock-numbers",
