@@ -28,8 +28,8 @@ swift build
 
 ## Install a released version
 
-1. Download `dock-numbers-macos-arm64.dmg` from the [Releases page](https://github.com/kovacsgellert/dock-numbers/releases), open it, and drag **dock-numbers** into **Applications**.
-2. The app isn't notarized, so on first launch right-click it and choose **Open** (otherwise Gatekeeper refuses to start it).
+1. Download `dock-numbers-macos-arm64.dmg` from the [Releases page](https://github.com/kovacsgellert/dock-numbers/releases), open it, and drag **dock-numbers** into **Applications**. (Prefer a guided install? Use `dock-numbers-installer.pkg` instead — it puts the app into `/Applications` automatically.)
+2. Neither is notarized, so on first launch right-click the app and choose **Open** (otherwise Gatekeeper refuses to start it).
 3. Grant Accessibility permission when prompted (`System Settings → Privacy & Security → Accessibility`).
 4. A settings window opens on first launch: toggle **Start automatically when you log in** if you want it always running. The window can be reopened anytime from the menu-bar icon.
 

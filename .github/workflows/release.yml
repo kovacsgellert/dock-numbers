@@ -23,11 +23,12 @@ jobs:
       - name: Build (release)
         run: swift build -c release --product dock-numbers
 
-      - name: Package .app + DMG
+      - name: Package .app + DMG + PKG
         run: |
           set -euo pipefail
           VERSION="${{ github.ref_name }}" ./scripts/package-app.sh
           ./scripts/make-dmg.sh
+          VERSION="${{ github.ref_name }}" ./scripts/make-pkg.sh
           cp README.md LICENSE dist/
 
       - name: Publish GitHub Release
@@ -42,4 +43,5 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             --title "${{ github.ref_name }}" \
             $FLAGS \
-            dist/dock-numbers-macos-arm64.dmg
+            dist/dock-numbers-macos-arm64.dmg \
+            dist/dock-numbers-installer.pkg
