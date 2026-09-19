@@ -2,6 +2,11 @@
 
 All notable changes to dock-numbers, oldest first.
 
+## 0.2.0-beta1
+
+- Always-visible Dock badges with live Dock tracking (Settings toggle + `badges_always_visible` config)
+- Appearance moved to the bottom of General settings
+
 ## 0.1.4
 
 - Restore minimized Finder windows when switching to Finder
