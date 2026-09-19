@@ -11,10 +11,17 @@ PKG="$OUT/dock-numbers-installer.pkg"
 
 test -d "$APP" || { echo "ERROR: $APP not found, run scripts/package-app.sh first" >&2; exit 1; }
 rm -f "$PKG"
+# Stage as root-relative payload (needs --root for --component-plist).
+STAGE="$OUT/pkg-root"
+rm -rf "$STAGE"
+mkdir -p "$STAGE/Applications"
+cp -R "$APP" "$STAGE/Applications/"
 pkgbuild \
   --identifier com.kovacsgellert.dock-numbers \
   --version "$VERSION" \
-  --install-location /Applications \
-  --component "$APP" \
+  --install-location / \
+  --component-plist "$ROOT/packaging/component.plist" \
+  --root "$STAGE" \
   "$PKG"
+rm -rf "$STAGE"
 echo "Wrote $PKG"
