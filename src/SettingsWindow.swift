@@ -1,25 +1,19 @@
 import Cocoa
 import ApplicationServices
 
-/// Small first-run / settings window: launch-at-login toggle,
-/// Accessibility permission status, and a usage hint.
-/// Always used from the main thread (menu actions, main-queue callbacks).
+/// Settings window, macOS System Settings style: icon header, grouped boxes,
+/// centered About footer. Always used from the main thread.
 final class SettingsWindowController: NSWindowController {
-  /// App-lifetime instance: menu items hold their target weakly, so a local
-  /// would deallocate and gray out the Settings… item.
-  static let shared = SettingsWindowController()
-
   private var loginSwitch: NSSwitch!
-  private var loginLabel: NSTextField!
+  private var loginErrorLabel: NSTextField!
   private var accessLabel: NSTextField!
   private var accessButton: NSButton!
-  private var loginErrorLabel: NSTextField!
-  private var accessPoll: Timer?
   private var menubarSwitch: NSSwitch!
+  private var accessPoll: Timer?
 
   init() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 430, height: 340),
+      contentRect: NSRect(x: 0, y: 0, width: 400, height: 460),
       styleMask: [.titled, .closable],
       backing: .buffered,
       defer: false
@@ -29,18 +23,24 @@ final class SettingsWindowController: NSWindowController {
     window.isReleasedWhenClosed = false
     super.init(window: window)
     buildUI()
+    fitToContent()
   }
 
   @available(*, unavailable)
   required init?(coder _: NSCoder) { fatalError() }
 
+  static let shared = SettingsWindowController()
+
+  // MARK: - Layout
+
   private func buildUI() {
     guard let content = window?.contentView else { return }
     let stack = NSStackView()
+    stack.identifier = NSUserInterfaceItemIdentifier("root")
     stack.orientation = .vertical
     stack.alignment = .leading
     stack.spacing = 14
-    stack.edgeInsets = NSEdgeInsets(top: 18, left: 22, bottom: 18, right: 22)
+    stack.edgeInsets = NSEdgeInsets(top: 18, left: 20, bottom: 18, right: 20)
     stack.translatesAutoresizingMaskIntoConstraints = false
     content.addSubview(stack)
     NSLayoutConstraint.activate([
@@ -50,46 +50,50 @@ final class SettingsWindowController: NSWindowController {
       stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor),
     ])
 
+    // Header: app icon + name + hint.
+    let header = NSStackView()
+    header.orientation = .horizontal
+    header.alignment = .centerY
+    header.spacing = 12
+    let iconView = NSImageView(image: NSApp.applicationIconImage)
+    iconView.imageScaling = .scaleProportionallyUpOrDown
+    iconView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      iconView.widthAnchor.constraint(equalToConstant: 56),
+      iconView.heightAnchor.constraint(equalToConstant: 56),
+    ])
+    header.addArrangedSubview(iconView)
+    let titleStack = NSStackView()
+    titleStack.orientation = .vertical
+    titleStack.spacing = 2
     let title = NSTextField(labelWithString: "dock-numbers")
-    title.font = .systemFont(ofSize: 15, weight: .semibold)
-    stack.addArrangedSubview(title)
-
-    let hint = NSTextField(wrappingLabelWithString: "Hold Option to show numbers on Dock icons, then press 1–9 or 0 to switch apps.")
-    hint.font = .systemFont(ofSize: 13)
+    title.font = .systemFont(ofSize: 16, weight: .semibold)
+    titleStack.addArrangedSubview(title)
+    let hint = NSTextField(wrappingLabelWithString: "Hold Option for numbers, press 1–9 or 0 to switch apps.")
+    hint.font = .systemFont(ofSize: 12)
     hint.textColor = .secondaryLabelColor
-    stack.addArrangedSubview(hint)
+    titleStack.addArrangedSubview(hint)
+    header.addArrangedSubview(titleStack)
+    stack.addArrangedSubview(header)
 
-    let grid = NSGridView(numberOfColumns: 2, rows: 0)
-    grid.columnSpacing = 12
-    grid.rowSpacing = 12
-    grid.translatesAutoresizingMaskIntoConstraints = false
-
-    loginLabel = NSTextField(labelWithString: "Start automatically when you log in")
-    loginLabel.font = .systemFont(ofSize: 13)
+    // General group.
     loginSwitch = NSSwitch()
     loginSwitch.target = self
     loginSwitch.action = #selector(loginToggled(_:))
-    grid.addRow(with: [loginLabel, loginSwitch])
-
-    let menubarLabel = NSTextField(labelWithString: "Show menu bar icon")
-    menubarLabel.font = .systemFont(ofSize: 13)
-    let menubarSwitch = NSSwitch()
-    self.menubarSwitch = menubarSwitch
-    menubarSwitch.target = self
-    menubarSwitch.action = #selector(menubarToggled(_:))
-    grid.addRow(with: [menubarLabel, menubarSwitch])
-
-    let themeLabel = NSTextField(labelWithString: "Appearance")
-    themeLabel.font = .systemFont(ofSize: 13)
+    let menubarSwitchLocal = NSSwitch()
+    menubarSwitchLocal.target = self
+    menubarSwitchLocal.action = #selector(menubarToggled(_:))
+    menubarSwitch = menubarSwitchLocal
     let themePopup = NSPopUpButton()
     themePopup.addItems(withTitles: AppAppearance.allCases.map(\.label))
     themePopup.selectItem(withTitle: AppAppearance.current.label)
     themePopup.target = self
     themePopup.action = #selector(appearanceChanged(_:))
-    grid.addRow(with: [themeLabel, themePopup])
-
-    grid.column(at: 0).xPlacement = .trailing
-    stack.addArrangedSubview(grid)
+    stack.addArrangedSubview(section(title: "General", rows: [
+      ("Start automatically when you log in", loginSwitch),
+      ("Show menu bar icon", menubarSwitchLocal),
+      ("Appearance", themePopup),
+    ]))
 
     loginErrorLabel = NSTextField(labelWithString: "")
     loginErrorLabel.font = .systemFont(ofSize: 12)
@@ -97,36 +101,35 @@ final class SettingsWindowController: NSWindowController {
     loginErrorLabel.isHidden = true
     stack.addArrangedSubview(loginErrorLabel)
 
-    stack.addArrangedSubview(NSBox.horizontalSeparator())
-
-    let accessRow = NSStackView()
-    accessRow.orientation = .horizontal
-    accessRow.alignment = .centerY
-    accessRow.spacing = 10
+    // Accessibility group.
     accessLabel = NSTextField(labelWithString: "")
     accessLabel.font = .systemFont(ofSize: 13)
-    accessRow.addArrangedSubview(accessLabel)
     accessButton = NSButton(title: "Open System Settings…", target: self, action: #selector(openAccessibilitySettings(_:)))
     accessButton.bezelStyle = .rounded
-    accessRow.addArrangedSubview(accessButton)
-    stack.addArrangedSubview(accessRow)
+    stack.addArrangedSubview(section(title: "Accessibility", rows: [(nil, accessLabel), (nil, accessButton)]))
 
-    stack.addArrangedSubview(NSBox.horizontalSeparator())
-
+    // About footer.
+    let footer = NSStackView()
+    footer.orientation = .vertical
+    footer.alignment = .centerX
+    footer.spacing = 2
+    footer.translatesAutoresizingMaskIntoConstraints = false
     let aboutName = NSTextField(labelWithString: "Made by Gellert Kovacs")
     aboutName.font = .systemFont(ofSize: 12)
     aboutName.textColor = .secondaryLabelColor
-    stack.addArrangedSubview(aboutName)
-
+    aboutName.alignment = .center
+    footer.addArrangedSubview(aboutName)
     let repoURL = URL(string: "https://github.com/kovacsgellert/dock-numbers")!
     let aboutLink = NSTextField(wrappingLabelWithString: "")
     aboutLink.isEditable = false
     aboutLink.isSelectable = true
+    aboutLink.alignment = .center
     aboutLink.attributedStringValue = NSAttributedString(
-      string: repoURL.absoluteString,
+      string: "github.com/kovacsgellert/dock-numbers",
       attributes: [.link: repoURL, .font: NSFont.systemFont(ofSize: 12)]
     )
-    stack.addArrangedSubview(aboutLink)
+    footer.addArrangedSubview(aboutLink)
+    stack.addArrangedSubview(footer)
 
     refreshAll()
     NotificationCenter.default.addObserver(
@@ -134,6 +137,68 @@ final class SettingsWindowController: NSWindowController {
       name: NSApplication.didBecomeActiveNotification, object: nil
     )
   }
+
+  /// Caption + rounded group with label/control rows (nil label = full-width row).
+  private func section(title: String, rows: [(String?, NSView)]) -> NSView {
+    let wrap = NSStackView()
+    wrap.orientation = .vertical
+    wrap.spacing = 6
+    wrap.translatesAutoresizingMaskIntoConstraints = false
+    let caption = NSTextField(labelWithString: title)
+    caption.font = .systemFont(ofSize: 13, weight: .semibold)
+    caption.textColor = .secondaryLabelColor
+    wrap.addArrangedSubview(caption)
+
+    let boxView = NSView()
+    boxView.wantsLayer = true
+    boxView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+    boxView.layer?.cornerRadius = 10
+    boxView.translatesAutoresizingMaskIntoConstraints = false
+    let inner = NSStackView()
+    inner.orientation = .vertical
+    inner.spacing = 12
+    inner.translatesAutoresizingMaskIntoConstraints = false
+    for (label, control) in rows {
+      if let label {
+        let row = NSStackView()
+        row.orientation = .horizontal
+        row.spacing = 12
+        let l = NSTextField(labelWithString: label)
+        l.font = .systemFont(ofSize: 13)
+        l.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        row.addArrangedSubview(l)
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        row.addArrangedSubview(spacer)
+        row.addArrangedSubview(control)
+        inner.addArrangedSubview(row)
+      } else {
+        inner.addArrangedSubview(control)
+      }
+    }
+    boxView.addSubview(inner)
+    NSLayoutConstraint.activate([
+      inner.topAnchor.constraint(equalTo: boxView.topAnchor, constant: 12),
+      inner.leadingAnchor.constraint(equalTo: boxView.leadingAnchor, constant: 14),
+      inner.trailingAnchor.constraint(equalTo: boxView.trailingAnchor, constant: -14),
+      inner.bottomAnchor.constraint(equalTo: boxView.bottomAnchor, constant: -12),
+    ])
+    wrap.addArrangedSubview(boxView)
+    return wrap
+  }
+
+  /// Shrink the window to its content so nothing clips.
+  private func fitToContent() {
+    guard let window, let content = window.contentView else { return }
+    content.layoutSubtreeIfNeeded()
+    let fitting = content.fittingSize.height
+    if fitting > 0, fitting < 800 {
+      window.setContentSize(NSSize(width: 400, height: fitting))
+      window.center()
+    }
+  }
+
+  // MARK: - Behavior
 
   func show() {
     refreshAll()
@@ -193,13 +258,5 @@ final class SettingsWindowController: NSWindowController {
     guard let selected = AppAppearance.allCases.first(where: { $0.label == sender.titleOfSelectedItem }) else { return }
     AppAppearance.current = selected
     AppAppearance.apply()
-  }
-}
-
-private extension NSBox {
-  static func horizontalSeparator() -> NSBox {
-    let box = NSBox()
-    box.boxType = .separator
-    return box
   }
 }
