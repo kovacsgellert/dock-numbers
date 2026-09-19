@@ -2,6 +2,8 @@
 
 Hold **Option** to overlay numbered glass badges on your macOS Dock icons, then press a number to switch to that app — a minimal, keyboard-first app switcher.
 
+![Numbered glass badges above the Dock](screenshots/dock-overlay.png)
+
 ## How it works
 
 1. Hold **Option** — frosted number badges appear beside each running app's Dock icon (100 ms delay, so quick `Option+letter` combos stay clean).
