@@ -70,9 +70,20 @@ final class SettingsWindowController: NSWindowController {
     titleStack.orientation = .vertical
     titleStack.alignment = .leading
     titleStack.spacing = 2
+    let nameRow = NSStackView()
+    nameRow.orientation = .horizontal
+    nameRow.alignment = .lastBaseline
+    nameRow.spacing = 8
     let title = NSTextField(labelWithString: "dock-numbers")
     title.font = .systemFont(ofSize: 16, weight: .semibold)
-    titleStack.addArrangedSubview(title)
+    nameRow.addArrangedSubview(title)
+    if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
+      let versionLabel = NSTextField(labelWithString: version)
+      versionLabel.font = .systemFont(ofSize: 12)
+      versionLabel.textColor = .secondaryLabelColor
+      nameRow.addArrangedSubview(versionLabel)
+    }
+    titleStack.addArrangedSubview(nameRow)
     let hint = NSTextField(wrappingLabelWithString: "Hold Option for numbers, press 1–9 or 0 to switch apps.")
     hint.font = .systemFont(ofSize: 12)
     hint.textColor = .secondaryLabelColor

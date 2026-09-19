@@ -38,29 +38,29 @@ func appIcon(size: CGFloat) -> NSImage {
     gloss.draw(in: rect, angle: 90)
     NSGraphicsContext.restoreGraphicsState()
 
-    // Three frosted number badges.
-    let labels = ["1", "2", "3"]
-    let d = size * 0.21
-    let gap = size * 0.045
-    let total = d * 3 + gap * 2
-    var x = (size - total) / 2
-    let y = (size - d) / 2 - size * 0.01
-    for label in labels {
-      let badge = NSBezierPath(ovalIn: CGRect(x: x, y: y, width: d, height: d))
-      NSColor(calibratedWhite: 0.32, alpha: 0.92).setFill()
-      badge.fill()
+    // Mini dock bar with three badge dots, centered (echoes the menu-bar icon).
+    let dotD = size * 0.137
+    let dotGap = size * 0.055
+    let barW = dotD * 3 + dotGap * 2 + size * 0.09
+    let barH = size * 0.15
+    let stackGap = size * 0.055
+    let groupH = dotD + stackGap + barH
+    var dx = (size - (dotD * 3 + dotGap * 2)) / 2
+    let dotsY = (size + groupH) / 2 - dotD
+    let barY = dotsY - stackGap - barH
+    let frost: (NSBezierPath) -> Void = { path in
+      NSColor(calibratedWhite: 0.32, alpha: 0.95).setFill()
+      path.fill()
       NSColor.white.withAlphaComponent(0.55).setStroke()
-      badge.lineWidth = size * 0.006
-      badge.stroke()
-      let attrs: [NSAttributedString.Key: Any] = [
-        .font: NSFont.systemFont(ofSize: d * 0.52, weight: .semibold),
-        .foregroundColor: NSColor.white,
-      ]
-      let s = NSAttributedString(string: label, attributes: attrs)
-      let ts = s.size()
-      s.draw(at: CGPoint(x: x + (d - ts.width) / 2, y: y + (d - ts.height) / 2 - d * 0.02))
-      x += d + gap
+      path.lineWidth = size * 0.006
+      path.stroke()
     }
+    for _ in 0..<3 {
+      frost(NSBezierPath(ovalIn: CGRect(x: dx, y: dotsY, width: dotD, height: dotD)))
+      dx += dotD + dotGap
+    }
+    frost(NSBezierPath(roundedRect: CGRect(x: (size - barW) / 2, y: barY, width: barW, height: barH),
+                       xRadius: barH / 2, yRadius: barH / 2))
     return true
   }
 }
