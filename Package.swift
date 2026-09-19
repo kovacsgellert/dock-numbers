@@ -7,7 +7,7 @@ let package = Package(
   targets: [
     .executableTarget(
       name: "dock-numbers",
-      path: "Sources/dock-numbers"
+      path: "src"
     )
   ]
 )
