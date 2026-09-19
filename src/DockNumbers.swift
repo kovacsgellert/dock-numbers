@@ -163,6 +163,14 @@ struct DockNumbers {
         }
       }
       let menu = NSMenu()
+      let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+      let header = NSMenuItem(
+        title: version.map { "dock-numbers \($0)" } ?? "dock-numbers",
+        action: nil, keyEquivalent: ""
+      )
+      header.isEnabled = false
+      menu.addItem(header)
+      menu.addItem(.separator())
       let settingsItem = NSMenuItem(title: "Settings…", action: nil, keyEquivalent: "")
       settingsItem.target = settings
       settingsItem.action = #selector(SettingsWindowController.showFromMenu(_:))
