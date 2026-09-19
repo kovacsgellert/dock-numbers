@@ -2,6 +2,10 @@
 
 All notable changes to dock-numbers, oldest first.
 
+## 0.1.2
+
+- Fix settings group boxes staying dark in light mode
+
 ## 0.1.1
 
 - Fix `.pkg` to always install into `/Applications` (no more upgrading stray same-id copies elsewhere on disk)
