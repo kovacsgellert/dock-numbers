@@ -187,8 +187,7 @@ final class SettingsWindowController: NSWindowController {
   }
 
   /// Caption + rounded group with label/control rows (nil label = full-width row).
-  private func section(title: String, rows: [(String?, NSView)]) -> NSView {
-    let wrap = NSStackView()
+  private func section(title: String, rows: [(String?, NSView)]) -> NSView {    let wrap = NSStackView()
     wrap.orientation = .vertical
     wrap.alignment = .leading
     wrap.spacing = 6
@@ -198,10 +197,7 @@ final class SettingsWindowController: NSWindowController {
     caption.textColor = .secondaryLabelColor
     wrap.addArrangedSubview(caption)
 
-    let boxView = NSView()
-    boxView.wantsLayer = true
-    boxView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-    boxView.layer?.cornerRadius = 10
+    let boxView = GroupBoxView()
     boxView.translatesAutoresizingMaskIntoConstraints = false
     let inner = NSStackView()
     inner.orientation = .vertical
@@ -328,5 +324,29 @@ final class SettingsWindowController: NSWindowController {
     AppConfig.shared.badgeDelayMs = ms
     AppConfig.shared.save()
     delayLabel.stringValue = "\(ms) ms"
+  }
+}
+
+/// Rounded settings group whose fill tracks light/dark appearance.
+/// (Resolving a dynamic NSColor to CGColor once would freeze the
+/// creation-time appearance — this re-resolves on every change.)
+private final class GroupBoxView: NSView {
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    wantsLayer = true
+    layer?.cornerRadius = 10
+    refresh()
+  }
+
+  @available(*, unavailable)
+  required init?(coder _: NSCoder) { fatalError() }
+
+  override func viewDidChangeEffectiveAppearance() {
+    super.viewDidChangeEffectiveAppearance()
+    refresh()
+  }
+
+  private func refresh() {
+    layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
   }
 }
