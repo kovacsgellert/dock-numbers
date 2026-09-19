@@ -9,6 +9,7 @@ final class SettingsWindowController: NSWindowController {
   private var accessLabel: NSTextField!
   private var accessButton: NSButton!
   private var menubarSwitch: NSSwitch!
+  private var alwaysSwitch: NSSwitch!
   private var themePopup: NSPopUpButton!
   private var delaySlider: NSSlider!
   private var delayLabel: NSTextField!
@@ -102,6 +103,10 @@ final class SettingsWindowController: NSWindowController {
     menubarSwitchLocal.target = self
     menubarSwitchLocal.action = #selector(menubarToggled(_:))
     menubarSwitch = menubarSwitchLocal
+    let alwaysSwitchLocal = NSSwitch()
+    alwaysSwitchLocal.target = self
+    alwaysSwitchLocal.action = #selector(alwaysToggled(_:))
+    alwaysSwitch = alwaysSwitchLocal
     let themePopup = NSPopUpButton()
     themePopup.addItems(withTitles: AppAppearance.allCases.map(\.label))
     themePopup.target = self
@@ -127,8 +132,9 @@ final class SettingsWindowController: NSWindowController {
     stack.addArrangedSubview(section(title: "General", rows: [
       ("Start automatically when you log in", loginSwitch),
       ("Show menu bar icon", menubarSwitchLocal),
-      ("Appearance", themePopup),
+      ("Badges always visible", alwaysSwitchLocal),
       ("Badge delay", delayRow),
+      ("Appearance", themePopup),
     ]))
 
     loginErrorLabel = NSTextField(wrappingLabelWithString: "")
@@ -271,6 +277,7 @@ final class SettingsWindowController: NSWindowController {
     AppConfig.shared.reload()
     loginSwitch.state = LaunchAtLogin.isEnabled ? .on : .off
     menubarSwitch.state = ShowMenuBarIcon.isEnabled ? .on : .off
+    alwaysSwitch.state = AppConfig.shared.badgesAlwaysVisible ? .on : .off
     themePopup.selectItem(withTitle: AppAppearance.current.label)
     delaySlider.doubleValue = Double(AppConfig.shared.badgeDelayMs)
     delayLabel.stringValue = "\(AppConfig.shared.badgeDelayMs) ms"
@@ -317,6 +324,12 @@ final class SettingsWindowController: NSWindowController {
     guard let selected = AppAppearance.allCases.first(where: { $0.label == sender.titleOfSelectedItem }) else { return }
     AppAppearance.current = selected
     AppAppearance.apply()
+  }
+
+  @objc private func alwaysToggled(_ sender: NSSwitch) {
+    AppConfig.shared.badgesAlwaysVisible = sender.state == .on
+    AppConfig.shared.save()
+    NotificationCenter.default.post(name: .appConfigChanged, object: nil)
   }
 
   @objc private func delayChanged(_ sender: NSSlider) {
