@@ -2,6 +2,10 @@
 
 All notable changes to dock-numbers, oldest first.
 
+## 0.1.4
+
+- Restore minimized Finder windows when switching to Finder
+
 ## 0.1.3
 
 - App icon at the top of README
