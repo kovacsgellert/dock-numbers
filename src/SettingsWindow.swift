@@ -19,7 +19,7 @@ final class SettingsWindowController: NSWindowController {
 
   init() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 430, height: 285),
+      contentRect: NSRect(x: 0, y: 0, width: 430, height: 340),
       styleMask: [.titled, .closable],
       backing: .buffered,
       defer: false
@@ -110,6 +110,23 @@ final class SettingsWindowController: NSWindowController {
     accessButton.bezelStyle = .rounded
     accessRow.addArrangedSubview(accessButton)
     stack.addArrangedSubview(accessRow)
+
+    stack.addArrangedSubview(NSBox.horizontalSeparator())
+
+    let aboutName = NSTextField(labelWithString: "Made by Gellert Kovacs")
+    aboutName.font = .systemFont(ofSize: 12)
+    aboutName.textColor = .secondaryLabelColor
+    stack.addArrangedSubview(aboutName)
+
+    let repoURL = URL(string: "https://github.com/kovacsgellert/dock-numbers")!
+    let aboutLink = NSTextField(wrappingLabelWithString: "")
+    aboutLink.isEditable = false
+    aboutLink.isSelectable = true
+    aboutLink.attributedStringValue = NSAttributedString(
+      string: repoURL.absoluteString,
+      attributes: [.link: repoURL, .font: NSFont.systemFont(ofSize: 12)]
+    )
+    stack.addArrangedSubview(aboutLink)
 
     refreshAll()
     NotificationCenter.default.addObserver(
