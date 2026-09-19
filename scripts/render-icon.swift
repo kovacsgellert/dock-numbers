@@ -65,28 +65,17 @@ func appIcon(size: CGFloat) -> NSImage {
   }
 }
 
-// MARK: - Menu bar template (alpha-only: solid disc, knocked-out numeral)
+// MARK: - Menu bar template (alpha-only black shapes)
 
 func menuBarIcon() -> NSImage {
   let size: CGFloat = 44
-  return NSImage(size: CGSize(width: size, height: size), flipped: false) { rect in
-    let disc = NSBezierPath(ovalIn: rect.insetBy(dx: 4, dy: 4))
+  return NSImage(size: CGSize(width: size, height: size), flipped: false) { _ in
     NSColor.black.setFill()
-    disc.fill()
-    NSGraphicsContext.saveGraphicsState()
-    NSBezierPath(ovalIn: rect.insetBy(dx: 4, dy: 4)).setClip()
-    NSColor.black.withAlphaComponent(0.25).setFill()
-    NSBezierPath(ovalIn: CGRect(x: 4, y: rect.height / 2, width: rect.width - 8, height: rect.height / 2 - 4)).fill()
-    NSGraphicsContext.restoreGraphicsState()
-    // Knock out the "1" so it renders as menu-bar foreground negative space.
-    NSGraphicsContext.saveGraphicsState()
-    let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 24, weight: .semibold)]
-    let s = NSAttributedString(string: "1", attributes: attrs)
-    let ts = s.size()
-    NSBezierPath(rect: rect).setClip()
-    NSGraphicsContext.current?.cgContext.setBlendMode(.destinationOut)
-    s.draw(at: CGPoint(x: (size - ts.width) / 2, y: (size - ts.height) / 2 - 1))
-    NSGraphicsContext.restoreGraphicsState()
+    // Mini dock bar with three badge dots above it.
+    NSBezierPath(roundedRect: CGRect(x: 5, y: 9, width: 34, height: 11), xRadius: 5.5, yRadius: 5.5).fill()
+    for x in [11, 19, 27] as [CGFloat] {
+      NSBezierPath(ovalIn: CGRect(x: x, y: 25, width: 8, height: 8)).fill()
+    }
     return true
   }
 }
