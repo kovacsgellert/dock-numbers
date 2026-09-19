@@ -37,7 +37,7 @@ Releases are built automatically: pushing a version tag like `0.1.0` triggers th
 
 ## Configuration file
 
-Settings live in `~/.config/dock-numbers/config.yml` — plain `key: value` pairs, safe to edit by hand or manage with scripts across machines:
+Settings live in `~/.config/dock-numbers/config.yml` — plain `key: value` pairs, safe to edit by hand or manage with scripts across machines. If `XDG_CONFIG_HOME` is set, `$XDG_CONFIG_HOME/dock-numbers/config.yml` is used instead.
 
 ```yaml
 start_at_login: false
@@ -69,7 +69,7 @@ Run the daemon (hold Option to badge, press a number to switch, `Ctrl+C` to quit
 swift run dock-numbers --daemon
 ```
 
-## AI disclosure
+## AI usage disclosure
 
 This app is completely vibe-coded — designed and written with an AI coding assistant, no hand-written code.
 

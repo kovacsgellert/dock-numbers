@@ -11,8 +11,21 @@ struct AppConfig: Equatable {
   /// Badge show delay in milliseconds, clamped to 0...500.
   var badgeDelayMs = 100
 
-  static let fileURL: URL = FileManager.default.homeDirectoryForCurrentUser
-    .appendingPathComponent(".config/dock-numbers/config.yml", isDirectory: false)
+  /// XDG_CONFIG_HOME when set (absolute, ~ expanded), else ~/.config.
+  /// macOS has no XDG convention natively, but this keeps dotfile-managed
+  /// setups and scripts portable across machines.
+  static let dirURL: URL = {
+    if var xdg = ProcessInfo.processInfo.environment["XDG_CONFIG_HOME"],
+       !xdg.trimmingCharacters(in: .whitespaces).isEmpty {
+      xdg = (xdg as NSString).expandingTildeInPath
+      return URL(fileURLWithPath: xdg, isDirectory: true)
+        .appendingPathComponent("dock-numbers", isDirectory: true)
+    }
+    return FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent(".config/dock-numbers", isDirectory: true)
+  }()
+
+  static let fileURL: URL = dirURL.appendingPathComponent("config.yml")
 
   /// Live copy used across the app. Mutate then save(), or reload() from disk.
   static var shared = load()
