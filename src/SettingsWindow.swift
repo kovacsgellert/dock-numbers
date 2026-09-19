@@ -9,6 +9,9 @@ final class SettingsWindowController: NSWindowController {
   private var accessLabel: NSTextField!
   private var accessButton: NSButton!
   private var menubarSwitch: NSSwitch!
+  private var themePopup: NSPopUpButton!
+  private var delaySlider: NSSlider!
+  private var delayLabel: NSTextField!
   private var accessPoll: Timer?
 
   init() {
@@ -65,6 +68,7 @@ final class SettingsWindowController: NSWindowController {
     header.addArrangedSubview(iconView)
     let titleStack = NSStackView()
     titleStack.orientation = .vertical
+    titleStack.alignment = .leading
     titleStack.spacing = 2
     let title = NSTextField(labelWithString: "dock-numbers")
     title.font = .systemFont(ofSize: 16, weight: .semibold)
@@ -72,6 +76,9 @@ final class SettingsWindowController: NSWindowController {
     let hint = NSTextField(wrappingLabelWithString: "Hold Option for numbers, press 1–9 or 0 to switch apps.")
     hint.font = .systemFont(ofSize: 12)
     hint.textColor = .secondaryLabelColor
+    // Bound the unwrapped intrinsic width (400 window − 40 insets − 56 icon − 12 gap),
+    // otherwise the stack overflows and AppKit breaks the leading constraint.
+    hint.preferredMaxLayoutWidth = 292
     titleStack.addArrangedSubview(hint)
     header.addArrangedSubview(titleStack)
     stack.addArrangedSubview(header)
@@ -86,24 +93,42 @@ final class SettingsWindowController: NSWindowController {
     menubarSwitch = menubarSwitchLocal
     let themePopup = NSPopUpButton()
     themePopup.addItems(withTitles: AppAppearance.allCases.map(\.label))
-    themePopup.selectItem(withTitle: AppAppearance.current.label)
     themePopup.target = self
     themePopup.action = #selector(appearanceChanged(_:))
+    self.themePopup = themePopup
+
+    let delayRow = NSStackView()
+    delayRow.orientation = .horizontal
+    delayRow.alignment = .centerY
+    delayRow.spacing = 8
+    delaySlider = NSSlider(value: 100, minValue: 0, maxValue: 500, target: self, action: #selector(delayChanged(_:)))
+    delaySlider.translatesAutoresizingMaskIntoConstraints = false
+    delaySlider.widthAnchor.constraint(equalToConstant: 130).isActive = true
+    delayRow.addArrangedSubview(delaySlider)
+    delayLabel = NSTextField(labelWithString: "")
+    delayLabel.font = .systemFont(ofSize: 13)
+    delayLabel.alignment = .right
+    delayLabel.translatesAutoresizingMaskIntoConstraints = false
+    delayLabel.widthAnchor.constraint(equalToConstant: 52).isActive = true
+    delayRow.addArrangedSubview(delayLabel)
     stack.addArrangedSubview(section(title: "General", rows: [
       ("Start automatically when you log in", loginSwitch),
       ("Show menu bar icon", menubarSwitchLocal),
       ("Appearance", themePopup),
+      ("Badge delay", delayRow),
     ]))
 
-    loginErrorLabel = NSTextField(labelWithString: "")
+    loginErrorLabel = NSTextField(wrappingLabelWithString: "")
     loginErrorLabel.font = .systemFont(ofSize: 12)
     loginErrorLabel.textColor = .systemRed
+    loginErrorLabel.preferredMaxLayoutWidth = 360
     loginErrorLabel.isHidden = true
     stack.addArrangedSubview(loginErrorLabel)
 
     // Accessibility group.
-    accessLabel = NSTextField(labelWithString: "")
+    accessLabel = NSTextField(wrappingLabelWithString: "")
     accessLabel.font = .systemFont(ofSize: 13)
+    accessLabel.preferredMaxLayoutWidth = 332
     accessButton = NSButton(title: "Open System Settings…", target: self, action: #selector(openAccessibilitySettings(_:)))
     accessButton.bezelStyle = .rounded
     stack.addArrangedSubview(section(title: "Accessibility", rows: [(nil, accessLabel), (nil, accessButton)]))
@@ -120,15 +145,18 @@ final class SettingsWindowController: NSWindowController {
     aboutName.alignment = .center
     footer.addArrangedSubview(aboutName)
     let repoURL = URL(string: "https://github.com/kovacsgellert/dock-numbers")!
-    let aboutLink = NSTextField(wrappingLabelWithString: "")
-    aboutLink.isEditable = false
-    aboutLink.isSelectable = true
-    aboutLink.alignment = .center
-    aboutLink.attributedStringValue = NSAttributedString(
+    let repoLink = NSTextField(wrappingLabelWithString: "")
+    repoLink.isEditable = false
+    repoLink.isSelectable = true
+    repoLink.alignment = .center
+    repoLink.preferredMaxLayoutWidth = 360
+    repoLink.attributedStringValue = NSAttributedString(
       string: "github.com/kovacsgellert/dock-numbers",
       attributes: [.link: repoURL, .font: NSFont.systemFont(ofSize: 12)]
     )
-    footer.addArrangedSubview(aboutLink)
+    // Selectable fields don't always fire links on single click — belt and braces.
+    repoLink.addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(openRepo(_:))))
+    footer.addArrangedSubview(repoLink)
     stack.addArrangedSubview(footer)
 
     refreshAll()
@@ -142,6 +170,7 @@ final class SettingsWindowController: NSWindowController {
   private func section(title: String, rows: [(String?, NSView)]) -> NSView {
     let wrap = NSStackView()
     wrap.orientation = .vertical
+    wrap.alignment = .leading
     wrap.spacing = 6
     wrap.translatesAutoresizingMaskIntoConstraints = false
     let caption = NSTextField(labelWithString: title)
@@ -191,7 +220,9 @@ final class SettingsWindowController: NSWindowController {
   private func fitToContent() {
     guard let window, let content = window.contentView else { return }
     content.layoutSubtreeIfNeeded()
-    let fitting = content.fittingSize.height
+    // Measure the root stack itself: contentView.fittingSize overshoots.
+    let root = content.subviews.first { $0.identifier?.rawValue == "root" }
+    let fitting = root?.fittingSize.height ?? content.fittingSize.height
     if fitting > 0, fitting < 800 {
       window.setContentSize(NSSize(width: 400, height: fitting))
       window.center()
@@ -219,8 +250,13 @@ final class SettingsWindowController: NSWindowController {
   }
 
   private func refreshAll() {
+    // Re-read config.yml: hand/script edits show up on next open.
+    AppConfig.shared.reload()
     loginSwitch.state = LaunchAtLogin.isEnabled ? .on : .off
     menubarSwitch.state = ShowMenuBarIcon.isEnabled ? .on : .off
+    themePopup.selectItem(withTitle: AppAppearance.current.label)
+    delaySlider.doubleValue = Double(AppConfig.shared.badgeDelayMs)
+    delayLabel.stringValue = "\(AppConfig.shared.badgeDelayMs) ms"
     loginErrorLabel.isHidden = true
     refreshAccessibility()
   }
@@ -229,6 +265,8 @@ final class SettingsWindowController: NSWindowController {
     loginErrorLabel.isHidden = true
     do {
       try LaunchAtLogin.setEnabled(sender.state == .on)
+      AppConfig.shared.startAtLogin = sender.state == .on
+      AppConfig.shared.save()
     } catch {
       loginErrorLabel.stringValue = "Couldn't change login item: \(error.localizedDescription)"
       loginErrorLabel.isHidden = false
@@ -254,9 +292,20 @@ final class SettingsWindowController: NSWindowController {
     NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
   }
 
+  @objc private func openRepo(_: NSGestureRecognizer) {
+    NSWorkspace.shared.open(URL(string: "https://github.com/kovacsgellert/dock-numbers")!)
+  }
+
   @objc private func appearanceChanged(_ sender: NSPopUpButton) {
     guard let selected = AppAppearance.allCases.first(where: { $0.label == sender.titleOfSelectedItem }) else { return }
     AppAppearance.current = selected
     AppAppearance.apply()
+  }
+
+  @objc private func delayChanged(_ sender: NSSlider) {
+    let ms = min(max(Int(sender.doubleValue.rounded()), 0), 500)
+    AppConfig.shared.badgeDelayMs = ms
+    AppConfig.shared.save()
+    delayLabel.stringValue = "\(ms) ms"
   }
 }
