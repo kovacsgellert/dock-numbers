@@ -2,6 +2,9 @@
 .build/
 .swiftpm/
 
+# Local packaging output
+dist/
+
 # Xcode
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/

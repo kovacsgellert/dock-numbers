@@ -12,6 +12,8 @@ final class HotkeyManager {
   private var src: CFRunLoopSource?
   private var optionHeld = false
 
+  var isRunning: Bool { tap != nil }
+
   // ANSI keycodes for 1..0
   private static let numberKeycodes: [Int64: Int] = [
     18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 0

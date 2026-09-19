@@ -1,14 +1,15 @@
 import Cocoa
+import ApplicationServices
 
 @main
 struct DockNumbers {
   static func main() {
     let args = CommandLine.arguments
-    if args.contains("--daemon") {
+    if args.contains("--daemon") || (args.count == 1 && isAppBundle) {
       runDaemon()
       return
     }
-    if args.contains("--list") || args.count == 1 {
+    if args.contains("--list") {
       let apps = DockReader.runningAppItems()
       if apps.isEmpty { print("(no dock apps found)"); return }
       for a in apps {
@@ -32,10 +33,16 @@ struct DockNumbers {
     print("Usage: dock-numbers [--list] [--activate <1-9,0>] [--daemon]")
   }
 
+  /// True when running as dock-numbers.app rather than a bare binary.
+  static var isAppBundle: Bool {
+    Bundle.main.bundleURL.pathExtension == "app"
+  }
+
   /// Menu-bar-style daemon: hold Option to badge Dock icons, press a number to switch.
   static func runDaemon() {
     let app = NSApplication.shared
     app.setActivationPolicy(.accessory)
+    AppAppearance.apply()
     let overlay = OverlayManager()
     let hotkey = HotkeyManager()
     var current: [DockApp] = []
@@ -66,10 +73,59 @@ struct DockNumbers {
     }
 
     guard hotkey.start() else {
-      print("ERROR: couldn't create event tap. Check Accessibility permission.")
-      exit(1)
+      // Launched on its own (e.g. via Finder) without Accessibility yet:
+      // stay alive, prompt, and let the settings window guide the user.
+      // The tap is retried whenever the app activates (see runChrome).
+      AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+      print("WARNING: no Accessibility permission yet — badges disabled until granted.")
+      runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: true)
+      app.run()
+      return
     }
+
+    runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: false)
     print("dock-numbers daemon running. Hold Option to show numbers, press 1-9/0 to switch. Ctrl+C to quit.")
     app.run()
+  }
+
+  /// Menu-bar presence (LSUIElement apps have no Dock icon): Settings + Quit,
+  /// first-launch window, and event-tap retry once Accessibility is granted.
+  static func runChrome(settings: SettingsWindowController, hotkey: HotkeyManager, forceSettings: Bool) {
+    let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    if let button = statusItem.button {
+      button.image = NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: "dock-numbers")
+    }
+    let menu = NSMenu()
+    let settingsItem = NSMenuItem(title: "Settings…", action: nil, keyEquivalent: "")
+    settingsItem.target = settings
+    settingsItem.action = #selector(SettingsWindowController.showFromMenu(_:))
+    menu.addItem(settingsItem)
+    menu.addItem(.separator())
+    menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+    statusItem.menu = menu
+
+    // If the tap couldn't start (no Accessibility), keep retrying on a timer:
+    // granting permission in System Settings never activates us, so an
+    // activation-only retry can miss it entirely.
+    // Note: `hotkey` is retained by the observer/timer blocks for the app's lifetime.
+    Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+      if !hotkey.isRunning, hotkey.start() {
+        print("Event tap started — badges enabled.")
+      }
+    }
+    NotificationCenter.default.addObserver(
+      forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+    ) { _ in
+      if !hotkey.isRunning, hotkey.start() {
+        print("Event tap started — badges enabled.")
+      }
+    }
+
+    // First launch shows the settings window (login toggle lives there).
+    let launchedKey = "hasLaunchedBefore"
+    if forceSettings || !UserDefaults.standard.bool(forKey: launchedKey) {
+      UserDefaults.standard.set(true, forKey: launchedKey)
+      DispatchQueue.main.async { settings.show() }
+    }
   }
 }

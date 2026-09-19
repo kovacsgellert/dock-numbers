@@ -6,21 +6,33 @@ enum DockSide {
 }
 
 private final class GlassBadgeView: NSVisualEffectView {
-  init(diameter: CGFloat, text: String) {
+  init(diameter: CGFloat, text: String, dark: Bool) {
     super.init(frame: CGRect(origin: .zero, size: CGSize(width: diameter, height: diameter)))
-    material = .popover
+    // Dark: translucent-dark glass; light: frosted-light glass.
+    material = dark ? .hudWindow : .popover
     blendingMode = .behindWindow
     state = .active
     wantsLayer = true
     layer?.cornerRadius = diameter / 2
     layer?.masksToBounds = true
-    // Frosted-glass rim: bright hairline works in dark and light mode.
-    layer?.borderColor = NSColor.white.withAlphaComponent(0.35).cgColor
+    layer?.borderColor = NSColor.white.withAlphaComponent(dark ? 0.5 : 0.7).cgColor
     layer?.borderWidth = 1
 
+    // Top-down specular gloss: the "liquid" cue.
+    let gloss = CAGradientLayer()
+    gloss.colors = [
+      NSColor.white.withAlphaComponent(dark ? 0.28 : 0.5).cgColor,
+      NSColor.white.withAlphaComponent(0.0).cgColor,
+    ]
+    gloss.startPoint = CGPoint(x: 0.5, y: 0.0)
+    gloss.endPoint = CGPoint(x: 0.5, y: 1.0)
+    gloss.frame = bounds
+    gloss.cornerRadius = diameter / 2
+    layer?.addSublayer(gloss)
+
     let label = NSTextField(labelWithString: text)
-    label.font = .systemFont(ofSize: 14, weight: .semibold)
-    label.textColor = .white
+    label.font = .systemFont(ofSize: 15, weight: .semibold)
+    label.textColor = dark ? .white : .black
     label.alignment = .center
     // Vertically true-center: NSTextField doesn't center text within an
     // oversized frame, so center the field itself (intrinsic height) instead.
@@ -57,6 +69,7 @@ final class OverlayManager {
   func show(apps: [DockApp]) {
     hide()
     guard let screen = NSScreen.screens.first else { return }
+    let dark = AppAppearance.isDark
     let screenH = screen.frame.height
     let icons = apps.map { app -> (DockApp, CGRect) in
       let ax = app.frame
@@ -90,7 +103,7 @@ final class OverlayManager {
       panel.ignoresMouseEvents = true
       panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
 
-      panel.contentView = GlassBadgeView(diameter: badgeSize, text: "\(app.index % 10)")
+      panel.contentView = GlassBadgeView(diameter: badgeSize, text: "\(app.index % 10)", dark: dark)
       panel.alphaValue = 0
       panel.orderFrontRegardless()
       NSAnimationContext.runAnimationGroup { ctx in

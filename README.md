@@ -26,19 +26,14 @@ Under the hood: Dock icon positions come from the Accessibility API (`AXDockItem
 swift build
 ```
 
-## Install a released binary
+## Install a released version
 
-1. Download `dock-numbers-macos-arm64.tar.gz` from the [Releases page](https://github.com/kovacsgellert/dock-numbers/releases) and unpack it.
-2. The binary isn't notarized, so macOS will quarantine it on first run. Clear it once:
-   ```sh
-   xattr -d com.apple.quarantine dock-numbers
-   ```
-3. Grant Accessibility permission (`System Settings → Privacy & Security → Accessibility`) when prompted, then run:
-   ```sh
-   ./dock-numbers --daemon
-   ```
+1. Download `dock-numbers-macos-arm64.dmg` from the [Releases page](https://github.com/kovacsgellert/dock-numbers/releases), open it, and drag **dock-numbers** into **Applications**.
+2. The app isn't notarized, so on first launch right-click it and choose **Open** (otherwise Gatekeeper refuses to start it).
+3. Grant Accessibility permission when prompted (`System Settings → Privacy & Security → Accessibility`).
+4. A settings window opens on first launch: toggle **Start automatically when you log in** if you want it always running. The window can be reopened anytime from the menu-bar icon.
 
-Releases are built automatically: pushing a version tag like `0.1.0` triggers the `Release` workflow, which compiles with `swift build -c release` on Apple Silicon and attaches the tarball to the GitHub Release.
+Releases are built automatically: pushing a version tag like `0.1.0` triggers the `Release` workflow, which packages the `.app`, builds the DMG, and attaches it to the GitHub Release.
 
 
 ## Usage
