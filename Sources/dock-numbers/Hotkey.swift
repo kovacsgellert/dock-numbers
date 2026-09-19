@@ -1,0 +1,86 @@
+import Cocoa
+import ApplicationServices
+
+/// Global Option-hold detection + number-key interception via CGEventTap.
+/// Requires Accessibility permission (already granted for the spike).
+final class HotkeyManager {
+  var onOptionDown: (() -> Void)?
+  var onOptionUp: (() -> Void)?
+  var onNumber: ((Int) -> Void)? // 0-9 as pressed (0 = 10th)
+
+  private var tap: CFMachPort?
+  private var src: CFRunLoopSource?
+  private var optionHeld = false
+
+  // ANSI keycodes for 1..0
+  private static let numberKeycodes: [Int64: Int] = [
+    18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 0
+  ]
+
+  func start() -> Bool {
+    guard tap == nil else { return true }
+    let mask: CGEventMask =
+      (1 << CGEventType.keyDown.rawValue) |
+      (1 << CGEventType.keyUp.rawValue) |
+      (1 << CGEventType.flagsChanged.rawValue)
+    guard let t = CGEvent.tapCreate(
+      tap: .cgSessionEventTap,
+      place: .headInsertEventTap,
+      options: .defaultTap,
+      eventsOfInterest: mask,
+      callback: tapCallback,
+      userInfo: Unmanaged.passUnretained(self).toOpaque()
+    ) else { return false }
+    tap = t
+    src = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, t, 0)
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), src, .commonModes)
+    CGEvent.tapEnable(tap: t, enable: true)
+    return true
+  }
+
+  func stop() {
+    if let t = tap { CGEvent.tapEnable(tap: t, enable: false) }
+    if let s = src { CFRunLoopRemoveSource(CFRunLoopGetCurrent(), s, .commonModes) }
+    src = nil
+    tap = nil
+    optionHeld = false
+  }
+
+  fileprivate func handle(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+    let pass = Unmanaged.passUnretained(event)
+    switch type {
+    case .tapDisabledByTimeout, .tapDisabledByUserInput:
+      if let t = tap { CGEvent.tapEnable(tap: t, enable: true) }
+      return pass
+    case .flagsChanged:
+      let down = event.flags.contains(.maskAlternate)
+      if down != optionHeld {
+        optionHeld = down
+        DispatchQueue.main.async { [weak self] in
+          down ? self?.onOptionDown?() : self?.onOptionUp?()
+        }
+      }
+      return pass
+    case .keyDown:
+      guard optionHeld else { return pass }
+      let code = event.getIntegerValueField(.keyboardEventKeycode)
+      guard let number = Self.numberKeycodes[code] else { return pass }
+      // Swallow auto-repeat; swallow the press so Option+2 doesn't type ™ etc.
+      DispatchQueue.main.async { [weak self] in self?.onNumber?(number) }
+      return nil
+    default:
+      return pass
+    }
+  }
+}
+
+private func tapCallback(
+  proxy: CGEventTapProxy,
+  type: CGEventType,
+  event: CGEvent,
+  refcon: UnsafeMutableRawPointer?
+) -> Unmanaged<CGEvent>? {
+  guard let refcon else { return Unmanaged.passUnretained(event) }
+  let mgr = Unmanaged<HotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
+  return mgr.handle(proxy: proxy, type: type, event: event)
+}
