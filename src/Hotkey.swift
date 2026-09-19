@@ -13,6 +13,7 @@ final class HotkeyManager {
   private var optionHeld = false
 
   var isRunning: Bool { tap != nil }
+  var isOptionHeld: Bool { optionHeld }
 
   // ANSI keycodes for 1..0
   private static let numberKeycodes: [Int64: Int] = [

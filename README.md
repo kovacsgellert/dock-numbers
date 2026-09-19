@@ -46,6 +46,7 @@ start_at_login: false
 show_menu_bar_icon: true
 appearance: system  # system | light | dark
 badge_delay_ms: 100  # 0...500
+badges_always_visible: false  # persistent mini-badges on Dock icons
 ```
 
 The file is created on first launch (existing installs migrate their current settings into it). Hand edits apply live within a couple of seconds, no relaunch needed. Everything is also editable from the settings window.

@@ -56,18 +56,20 @@ struct DockNumbers {
     app.delegate = delegate
     let overlay = OverlayManager()
     let hotkey = HotkeyManager()
+    let persistent = PersistentBadges(overlay: overlay, hotkey: hotkey)
     var current: [DockApp] = []
     var pendingShow: DispatchWorkItem?
 
     hotkey.onOptionDown = {
       // Resolve targets immediately so a fast Option+number still switches,
       // but only paint the badges if Option is actually being held.
+      // (Replaces persistent mini-badges while held; they return on release.)
       current = DockReader.runningAppItems()
       let snapshot = current
       // Hold-to-show delay, configurable 0...500 ms: quick Option taps
       // (e.g. Option+letter combos) never flash badges.
       let showDelay = Double(AppConfig.shared.badgeDelayMs) / 1000.0
-      let work = DispatchWorkItem { Task { await overlay.show(apps: snapshot) } }
+      let work = DispatchWorkItem { Task { await overlay.show(apps: snapshot, style: .hold) } }
       pendingShow = work
       DispatchQueue.main.asyncAfter(deadline: .now() + showDelay, execute: work)
     }
@@ -75,7 +77,8 @@ struct DockNumbers {
       pendingShow?.cancel()
       pendingShow = nil
       current = []
-      Task { await overlay.hide() }
+      // Back to persistent mini-badges if enabled, else clear the hold overlay.
+      persistent.sync()
     }
     hotkey.onNumber = { number in
       let idx = (number == 0) ? 10 : number
@@ -91,12 +94,14 @@ struct DockNumbers {
       AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
       print("WARNING: no Accessibility permission yet — badges disabled until granted.")
       runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: true)
+      persistent.sync()
       app.run()
       return
     }
 
     runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: noAccessibility)
     print("dock-numbers daemon running. Hold Option to show numbers, press 1-9/0 to switch. Ctrl+C to quit.")
+    persistent.sync()
     app.run()
   }
 

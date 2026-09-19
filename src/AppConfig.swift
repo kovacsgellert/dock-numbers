@@ -10,6 +10,8 @@ struct AppConfig: Equatable {
   var appearance = AppAppearance.system
   /// Badge show delay in milliseconds, clamped to 0...500.
   var badgeDelayMs = 100
+  /// Persistent mini-badges on Dock icons (no Option hold needed).
+  var badgesAlwaysVisible = false
 
   /// XDG_CONFIG_HOME when set (absolute, ~ expanded), else ~/.config.
   /// macOS has no XDG convention natively, but this keeps dotfile-managed
@@ -53,17 +55,30 @@ struct AppConfig: Equatable {
     }
     var config = AppConfig()
     let dict = parse(text)
-    if let raw = dict["start_at_login"], let b = parseBool(raw) {
+    var missingKeys = false
+    func take(_ key: String) -> String? {
+      guard let v = dict[key] else { missingKeys = true; return nil }
+      return v
+    }
+    if let raw = take("start_at_login"), let b = parseBool(raw) {
       config.startAtLogin = b
     }
-    if let raw = dict["show_menu_bar_icon"], let b = parseBool(raw) {
+    if let raw = take("show_menu_bar_icon"), let b = parseBool(raw) {
       config.showMenuBarIcon = b
     }
-    if let raw = dict["appearance"], let a = AppAppearance(rawValue: raw.lowercased()) {
+    if let raw = take("appearance"), let a = AppAppearance(rawValue: raw.lowercased()) {
       config.appearance = a
     }
-    if let raw = dict["badge_delay_ms"], let ms = Int(raw) {
+    if let raw = take("badge_delay_ms"), let ms = Int(raw) {
       config.badgeDelayMs = min(max(ms, 0), 500)
+    }
+    if let raw = take("badges_always_visible"), let b = parseBool(raw) {
+      config.badgesAlwaysVisible = b
+    }
+    // Older files predate newer keys: backfill once so the file always
+    // documents every setting (and hand-editing discovery works).
+    if missingKeys {
+      config.save()
     }
     return config
   }
@@ -76,6 +91,7 @@ struct AppConfig: Equatable {
       show_menu_bar_icon: \(showMenuBarIcon)
       appearance: \(appearance.rawValue)  # system | light | dark
       badge_delay_ms: \(badgeDelayMs)  # 0...500
+      badges_always_visible: \(badgesAlwaysVisible)
 
       """
     do {
@@ -113,4 +129,9 @@ struct AppConfig: Equatable {
     default: return nil
     }
   }
+}
+
+extension Notification.Name {
+  /// Posted when settings change via the window (file watcher tick also applies hand edits).
+  static let appConfigChanged = Notification.Name("dock-numbers.configChanged")
 }

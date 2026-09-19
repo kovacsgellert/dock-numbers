@@ -31,7 +31,7 @@ private final class GlassBadgeView: NSVisualEffectView {
     layer?.addSublayer(gloss)
 
     let label = NSTextField(labelWithString: text)
-    label.font = .systemFont(ofSize: 15, weight: .semibold)
+    label.font = .systemFont(ofSize: (diameter * 0.53).rounded(), weight: .semibold)
     label.textColor = dark ? .white : .black
     label.alignment = .center
     // Vertically true-center: NSTextField doesn't center text within an
@@ -60,16 +60,29 @@ private extension NSShadow {
 
 /// Floating number badges beside Dock icons.
 /// AX frames use a top-left origin; Cocoa windows use bottom-left, so we flip Y.
+/// Badge presentation style.
+enum BadgeStyle {
+  /// Option-hold: large badges beside icons, toward the screen center.
+  case hold
+  /// Always-visible: small badges inset in the icon's top-left corner,
+  /// fully inside the Dock perimeter.
+  case persistent
+}
+
 final class OverlayManager {
   private var panels: [NSPanel] = []
-  private let badgeSize: CGFloat = 28
+  private let holdSize: CGFloat = 28
+  private let persistentSize: CGFloat = 20
+  /// Inset of persistent badges from the icon corner (keeps them on the icon).
+  private let cornerInset: CGFloat = 2
   private let gap: CGFloat = 8
 
   @MainActor
-  func show(apps: [DockApp]) {
+  func show(apps: [DockApp], style: BadgeStyle = .hold) {
     hide()
     guard let screen = NSScreen.screens.first else { return }
     let dark = AppAppearance.isDark
+    let diameter = style == .hold ? holdSize : persistentSize
     let screenH = screen.frame.height
     let icons = apps.map { app -> (DockApp, CGRect) in
       let ax = app.frame
@@ -79,19 +92,10 @@ final class OverlayManager {
     let side = Self.detectSide(icons: icons.map(\.1), screen: screen.frame)
 
     for (app, icon) in icons {
-      let origin: CGPoint
-      switch side {
-      case .right: // Dock on right -> badges to the left, vertically centered
-        origin = CGPoint(x: icon.minX - gap - badgeSize, y: icon.midY - badgeSize / 2)
-      case .left: // Dock on left -> badges to the right
-        origin = CGPoint(x: icon.maxX + gap, y: icon.midY - badgeSize / 2)
-      case .bottom: // Dock on bottom -> badges above
-        origin = CGPoint(x: icon.midX - badgeSize / 2, y: icon.maxY + gap)
-      case .top:
-        origin = CGPoint(x: icon.midX - badgeSize / 2, y: icon.minY - gap - badgeSize)
-      }
+      let base = self.badgeOrigin(for: icon, side: side, diameter: diameter, style: style)
+      let origin = base
       let panel = NSPanel(
-        contentRect: CGRect(origin: origin, size: CGSize(width: badgeSize, height: badgeSize)),
+        contentRect: CGRect(origin: origin, size: CGSize(width: diameter, height: diameter)),
         styleMask: [.borderless, .nonactivatingPanel],
         backing: .buffered,
         defer: false
@@ -99,11 +103,12 @@ final class OverlayManager {
       panel.level = .screenSaver
       panel.isOpaque = false
       panel.backgroundColor = .clear
-      panel.hasShadow = true
+      panel.hasShadow = style == .hold
       panel.ignoresMouseEvents = true
       panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
 
-      panel.contentView = GlassBadgeView(diameter: badgeSize, text: "\(app.index % 10)", dark: dark)
+      panel.contentView = GlassBadgeView(diameter: diameter, text: "\(app.index % 10)", dark: dark)
+      panel.alphaValue = 0
       panel.alphaValue = 0
       panel.orderFrontRegardless()
       NSAnimationContext.runAnimationGroup { ctx in
@@ -118,6 +123,26 @@ final class OverlayManager {
   func hide() {
     for p in panels { p.orderOut(nil) }
     panels.removeAll()
+  }
+
+  private func badgeOrigin(for icon: CGRect, side: DockSide, diameter: CGFloat, style: BadgeStyle) -> CGPoint {
+    switch style {
+    case .persistent:
+      // Top-left corner of the icon, inset so the badge sits fully
+      // on the icon, inside the Dock perimeter.
+      return CGPoint(x: icon.minX + cornerInset, y: icon.maxY - diameter - cornerInset)
+    case .hold:
+      switch side {
+      case .right: // Dock on right -> badges to the left, vertically centered
+        return CGPoint(x: icon.minX - gap - diameter, y: icon.midY - diameter / 2)
+      case .left: // Dock on left -> badges to the right
+        return CGPoint(x: icon.maxX + gap, y: icon.midY - diameter / 2)
+      case .bottom: // Dock on bottom -> badges above
+        return CGPoint(x: icon.midX - diameter / 2, y: icon.maxY + gap)
+      case .top:
+        return CGPoint(x: icon.midX - diameter / 2, y: icon.minY - gap - diameter)
+      }
+    }
   }
 
   /// Geometry-based: no Dock prefs needed, follows the icons wherever they are.
