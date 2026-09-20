@@ -71,6 +71,9 @@ enum BadgeStyle {
 
 final class OverlayManager {
   private var panels: [NSPanel] = []
+  /// What the panels currently show (nil = hidden). Lets the watcher tell
+  /// a hold overlay apart from persistent mini-badges.
+  private(set) var styleShown: BadgeStyle?
   private let holdSize: CGFloat = 28
   private let persistentSize: CGFloat = 20
   /// Inset of persistent badges from the icon corner (keeps them on the icon).
@@ -117,12 +120,14 @@ final class OverlayManager {
       }
       panels.append(panel)
     }
+    styleShown = style
   }
 
   @MainActor
   func hide() {
     for p in panels { p.orderOut(nil) }
     panels.removeAll()
+    styleShown = nil
   }
 
   private func badgeOrigin(for icon: CGRect, side: DockSide, diameter: CGFloat, style: BadgeStyle) -> CGPoint {

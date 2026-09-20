@@ -61,10 +61,11 @@ struct DockNumbers {
     var pendingShow: DispatchWorkItem?
 
     hotkey.onOptionDown = {
-      // Resolve targets immediately so a fast Option+number still switches,
-      // but only paint the badges if Option is actually being held.
-      // (Replaces persistent mini-badges while held; they return on release.)
+      // Resolve targets immediately so a fast Option+number still switches.
+      // With always-visible minis on screen there is nothing to pop out:
+      // only the delayed hold overlay needs painting otherwise.
       current = DockReader.runningAppItems()
+      guard !AppConfig.shared.badgesAlwaysVisible else { return }
       let snapshot = current
       // Hold-to-show delay, configurable 0...500 ms: quick Option taps
       // (e.g. Option+letter combos) never flash badges.
@@ -77,7 +78,11 @@ struct DockNumbers {
       pendingShow?.cancel()
       pendingShow = nil
       current = []
-      // Back to persistent mini-badges if enabled, else clear the hold overlay.
+      // Clear a hold overlay if one is up (leaves persistent minis untouched),
+      // then restore minis if enabled.
+      if overlay.styleShown == .hold {
+        Task { await overlay.hide() }
+      }
       persistent.sync()
     }
     hotkey.onNumber = { number in

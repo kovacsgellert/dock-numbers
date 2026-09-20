@@ -39,16 +39,20 @@ final class PersistentBadges: NSObject {
 
   @objc func sync() {
     guard AppConfig.shared.badgesAlwaysVisible, hotkey?.isOptionHeld == false else {
-      if active {
-        active = false
-        lastKey = []
+      // Hide minis only when the feature is off. While held with the feature
+      // on they stay put: no hold overlay replaces them, so hiding would
+      // flash the Dock bare until release.
+      if !AppConfig.shared.badgesAlwaysVisible, overlay.styleShown == .persistent {
         Task { await overlay.hide() }
+        active = false
       }
       return
     }
     let apps = DockReader.runningAppItems()
     let k = Self.key(apps)
-    guard !active || k != lastKey else { return }
+    // Re-show when the overlay isn't showing persistent minis (e.g. a hold
+    // overlay took over, or they were hidden) or the Dock changed.
+    guard overlay.styleShown != .persistent || k != lastKey else { return }
     active = true
     lastKey = k
     Task { await overlay.show(apps: apps, style: .persistent) }
