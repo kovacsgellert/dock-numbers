@@ -1,20 +1,18 @@
 # Changelog
 
-All notable changes to dock-numbers, oldest first.
-
 ## 0.2.0-beta1
 
-- Always-visible Dock badges with live Dock tracking (Settings toggle + `badges_always_visible` config)
-- Appearance moved to the bottom of General settings
+- Always-visible Dock badges with live Dock tracking
+- Settings: always-visible toggle, Appearance moved last
 
 ## 0.1.4
 
-- Restore minimized Finder windows when switching to Finder
+- Restore minimized Finder windows on switch
 
 ## 0.1.3
 
-- App icon at the top of README
-- Version number in `.dmg`/`.pkg` installer filenames
+- Show app icon at top of README
+- Versioned installer filenames
 
 ## 0.1.2
 
@@ -22,28 +20,21 @@ All notable changes to dock-numbers, oldest first.
 
 ## 0.1.1
 
-- Fix `.pkg` to always install into `/Applications` (no more upgrading stray same-id copies elsewhere on disk)
+- Fix `.pkg` to always install into `/Applications`
 
 ## 0.1.0
 
-- Hold Option to badge Dock icons, press a number to switch apps (initial prototype)
-- Move sources to `src/`, add README, MIT license, AI disclosure
-- Tag-triggered release workflow with install docs
-- Dock overlay screenshot in README
-- Ship the app: `.app` bundle, DMG installer, settings window, themes
-- Open a new Finder window when switching to Finder with none open
-- `.pkg` installer that puts the app into `/Applications`
-- Code-rendered app icon + menu-bar template (no design tools needed)
+- Add app icon + menu-bar template (code-rendered)
 - Wire custom icon into the `.app` bundle and menu bar
-- Show settings window on reopen (Spotlight / click while running)
-- Show/hide menu-bar icon setting
+- Show settings window on reopen (Spotlight/click while running)
+- Add show/hide menu-bar icon setting
 - Retain status item, apply menu-bar visibility live
-- Settings laid out as a grid: labels left, controls right
-- About section in settings: author + repo link
+- Lay settings out as a grid: labels left, controls right
+- Add About section in settings: author + repo link
 - Restyle settings macOS-style: icon header, grouped sections
 - Portable `~/.config` YAML settings store + configurable badge delay
 - Settings: delay slider, disk-backed refresh, layout overflow fixes
-- `--no-accessibility` flag for headless UI testing
+- Add `--no-accessibility` flag for headless UI testing
 - Group name + repo link under an About section
 - Fix settings launch crash, footer centering, row rhythm
 - Unify settings alignment: About leading, even row heights
@@ -51,3 +42,16 @@ All notable changes to dock-numbers, oldest first.
 - Menu-bar icon: mini dock with badge dots instead of 1-disc
 - Match app icon to menu-bar motif; show version in settings
 - Honor `XDG_CONFIG_HOME` for the config file location
+
+## 0.1.0-alpha2
+
+- Add dock overlay screenshot to README
+- Ship the app: `.app` bundle, DMG installer, settings, themes
+- Open a new Finder window when switching to Finder with none open
+- Add `.pkg` installer that puts the app into `/Applications`
+
+## 0.1.0-alpha1
+
+- Hold Option to badge Dock icons, press number to switch apps
+- Move sources to `src/`, add README, MIT license, AI disclosure
+- Tag-triggered release workflow with install docs
