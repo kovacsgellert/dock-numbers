@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- Always-visible: holding Option no longer pops badges out (no visible change)
+- Disable badge-delay slider when always-visible is on
+
 ## 0.2.0-beta1
 
 - Always-visible Dock badges with live Dock tracking
