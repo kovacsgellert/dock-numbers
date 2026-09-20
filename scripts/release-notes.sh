@@ -8,11 +8,16 @@
 set -euo pipefail
 TAG="${1:?usage: release-notes.sh <tag>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BASE="${TAG%%-*}" # 0.2.0 for both 0.2.0 and 0.2.0-beta1
 echo "# $TAG"
 echo
-awk -v tag="$TAG" '
+awk -v tag="$TAG" -v base="$BASE" '
   /^## / {
-    if (collect) exit
+    if (collect) {
+      # Keep collecting prereleases of the same version; stop at anything else.
+      if ($2 ~ ("^" base "-")) { next }
+      exit
+    }
     if ($2 == tag) { collect = 1 }
     next
   }
