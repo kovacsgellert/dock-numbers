@@ -136,7 +136,6 @@ final class SettingsWindowController: NSWindowController {
       ("Badge delay", delayRow),
       ("Appearance", themePopup),
     ]))
-
     loginErrorLabel = NSTextField(wrappingLabelWithString: "")
     loginErrorLabel.font = .systemFont(ofSize: 12)
     loginErrorLabel.textColor = .systemRed
@@ -281,6 +280,7 @@ final class SettingsWindowController: NSWindowController {
     themePopup.selectItem(withTitle: AppAppearance.current.label)
     delaySlider.doubleValue = Double(AppConfig.shared.badgeDelayMs)
     delayLabel.stringValue = "\(AppConfig.shared.badgeDelayMs) ms"
+    updateDelayEnabled()
     loginErrorLabel.isHidden = true
     refreshAccessibility()
   }
@@ -329,7 +329,15 @@ final class SettingsWindowController: NSWindowController {
   @objc private func alwaysToggled(_ sender: NSSwitch) {
     AppConfig.shared.badgesAlwaysVisible = sender.state == .on
     AppConfig.shared.save()
+    updateDelayEnabled()
     NotificationCenter.default.post(name: .appConfigChanged, object: nil)
+  }
+
+  /// The hold-to-show delay is meaningless with persistent minis on screen.
+  private func updateDelayEnabled() {
+    let enabled = !AppConfig.shared.badgesAlwaysVisible
+    delaySlider.isEnabled = enabled
+    delayLabel.textColor = enabled ? .labelColor : .disabledControlTextColor
   }
 
   @objc private func delayChanged(_ sender: NSSlider) {
