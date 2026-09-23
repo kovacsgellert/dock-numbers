@@ -1,13 +1,13 @@
 #!/bin/bash
-# Build an installer .pkg that puts dock-numbers.app into /Applications.
+# Build an installer .pkg that puts DockShortcuts.app into /Applications.
 # Unsigned (no paid Developer ID): on first run, right-click → Open.
 # Usage: [VERSION=0.1.0] ./scripts/make-pkg.sh   (run package-app.sh first)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${VERSION:-$(git -C "$ROOT" describe --tags --always 2>/dev/null || echo 0.0.0-dev)}"
 OUT="${OUT:-$ROOT/dist}"
-APP="$OUT/dock-numbers.app"
-PKG="$OUT/dock-numbers-$VERSION-macos-arm64.pkg"
+APP="$OUT/DockShortcuts.app"
+PKG="$OUT/dock-shortcuts-$VERSION-macos-arm64.pkg"
 
 test -d "$APP" || { echo "ERROR: $APP not found, run scripts/package-app.sh first" >&2; exit 1; }
 rm -f "$PKG"
@@ -17,7 +17,7 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE/Applications"
 cp -R "$APP" "$STAGE/Applications/"
 pkgbuild \
-  --identifier com.kovacsgellert.dock-numbers \
+  --identifier com.kovacsgellert.dock-shortcuts \
   --version "$VERSION" \
   --install-location / \
   --component-plist "$ROOT/packaging/component.plist" \

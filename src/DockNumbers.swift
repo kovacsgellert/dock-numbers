@@ -16,7 +16,7 @@ struct DockNumbers {
         let f = a.frame
         print("\(a.index % 10): \(a.title) [\(a.bundleIdentifier ?? "-")] frame=\(Int(f.origin.x)),\(Int(f.origin.y)) \(Int(f.width))x\(Int(f.height))")
       }
-      print("\nTip: swift run dock-numbers --activate <number>")
+      print("\nTip: swift run dock-shortcuts --activate <number>")
       return
     }
     if let i = args.firstIndex(of: "--activate"), args.count > i + 1,
@@ -30,10 +30,10 @@ struct DockNumbers {
       print("Activating \(app.title)...")
       exit(AppActivator.activate(app) ? 0 : 1)
     }
-    print("Usage: dock-numbers [--list] [--activate <1-9,0>] [--daemon] [--no-accessibility]")
+    print("Usage: dock-shortcuts [--list] [--activate <1-9,0>] [--daemon] [--no-accessibility]")
   }
 
-  /// True when running as dock-numbers.app rather than a bare binary.
+  /// True when running as DockShortcuts.app rather than a bare binary.
   static var isAppBundle: Bool {
     Bundle.main.bundleURL.pathExtension == "app"
   }
@@ -105,7 +105,7 @@ struct DockNumbers {
     }
 
     runChrome(settings: SettingsWindowController.shared, hotkey: hotkey, forceSettings: noAccessibility)
-    print("dock-numbers daemon running. Hold Option to show numbers, press 1-9/0 to switch. Ctrl+C to quit.")
+    print("DockShortcuts daemon running. Hold Option to show numbers, press 1-9/0 to switch. Ctrl+C to quit.")
     persistent.sync()
     app.run()
   }
@@ -162,20 +162,20 @@ struct DockNumbers {
       guard statusItem == nil else { return }
       let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
       if let button = item.button {
-        button.toolTip = "dock-numbers"
+        button.toolTip = "DockShortcuts"
         if let url = Bundle.main.url(forResource: "menubar", withExtension: "png"),
            let icon = NSImage(contentsOf: url) {
           icon.isTemplate = true
           icon.size = CGSize(width: 18, height: 18)
           button.image = icon
         } else {
-          button.image = NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: "dock-numbers")
+          button.image = NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: "DockShortcuts")
         }
       }
       let menu = NSMenu()
       let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
       let header = NSMenuItem(
-        title: version.map { "dock-numbers \($0)" } ?? "dock-numbers",
+        title: version.map { "DockShortcuts \($0)" } ?? "DockShortcuts",
         action: nil, keyEquivalent: ""
       )
       header.isEnabled = false

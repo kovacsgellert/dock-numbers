@@ -1,6 +1,6 @@
-<img src="assets/icon-1024.png" width="128" alt="dock-numbers icon">
+<img src="assets/icon-1024.png" width="128" alt="DockShortcuts icon">
 
-# dock-numbers
+# DockShortcuts
 
 Hold **Option** to overlay numbered glass badges on your macOS Dock icons, then press a number to switch to that app — a minimal, keyboard-first app switcher.
 
@@ -30,7 +30,7 @@ swift build
 
 ## Install a released version
 
-1. Download `dock-numbers-<version>-macos-arm64.dmg` from the [Releases page](https://github.com/kovacsgellert/dock-numbers/releases), open it, and drag **dock-numbers** into **Applications**. (Prefer a guided install? Use `dock-numbers-<version>-macos-arm64.pkg` instead — it puts the app into `/Applications` automatically.)
+1. Download `dock-shortcuts-<version>-macos-arm64.dmg` from the [Releases page](https://github.com/kovacsgellert/dock-shortcuts-mac/releases), open it, and drag **DockShortcuts** into **Applications**. (Prefer a guided install? Use `dock-shortcuts-<version>-macos-arm64.pkg` instead — it puts the app into `/Applications` automatically.)
 2. Neither is notarized, so on first launch right-click the app and choose **Open** (otherwise Gatekeeper refuses to start it).
 3. Grant Accessibility permission when prompted (`System Settings → Privacy & Security → Accessibility`).
 4. A settings window opens on first launch: toggle **Start automatically when you log in** if you want it always running. The window can be reopened anytime from the menu-bar icon.
@@ -39,7 +39,7 @@ Releases are built automatically: pushing a version tag like `0.1.0` triggers th
 
 ## Configuration file
 
-Settings live in `~/.config/dock-numbers/config.yml` — plain `key: value` pairs, safe to edit by hand or manage with scripts across machines. If `XDG_CONFIG_HOME` is set, `$XDG_CONFIG_HOME/dock-numbers/config.yml` is used instead.
+Settings live in `~/.config/dock-shortcuts/config.yml` — plain `key: value` pairs, safe to edit by hand or manage with scripts across machines. If `XDG_CONFIG_HOME` is set, `$XDG_CONFIG_HOME/dock-shortcuts/config.yml` is used instead.
 
 ```yaml
 start_at_login: false
@@ -57,19 +57,19 @@ The file is created on first launch (existing installs migrate their current set
 List running Dock apps and their badge numbers:
 
 ```sh
-swift run dock-numbers --list
+swift run dock-shortcuts --list
 ```
 
 Activate an app by number (same as pressing it while holding Option):
 
 ```sh
-swift run dock-numbers --activate 2
+swift run dock-shortcuts --activate 2
 ```
 
 Run the daemon (hold Option to badge, press a number to switch, `Ctrl+C` to quit):
 
 ```sh
-swift run dock-numbers --daemon
+swift run dock-shortcuts --daemon
 ```
 
 ## AI usage disclosure

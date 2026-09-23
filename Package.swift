@@ -2,11 +2,14 @@
 import PackageDescription
 
 let package = Package(
-  name: "dock-numbers",
+  name: "dock-shortcuts-mac",
   platforms: [.macOS(.v14)],
+  products: [
+    .executable(name: "dock-shortcuts", targets: ["dock-shortcuts"])
+  ],
   targets: [
     .executableTarget(
-      name: "dock-numbers",
+      name: "dock-shortcuts",
       path: "src"
     )
   ]

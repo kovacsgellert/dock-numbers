@@ -22,7 +22,7 @@ final class SettingsWindowController: NSWindowController {
       backing: .buffered,
       defer: false
     )
-    window.title = "dock-numbers"
+    window.title = "DockShortcuts"
     window.center()
     window.isReleasedWhenClosed = false
     super.init(window: window)
@@ -75,7 +75,7 @@ final class SettingsWindowController: NSWindowController {
     nameRow.orientation = .horizontal
     nameRow.alignment = .lastBaseline
     nameRow.spacing = 8
-    let title = NSTextField(labelWithString: "dock-numbers")
+    let title = NSTextField(labelWithString: "DockShortcuts")
     title.font = .systemFont(ofSize: 16, weight: .semibold)
     nameRow.addArrangedSubview(title)
     if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
@@ -170,13 +170,13 @@ final class SettingsWindowController: NSWindowController {
     aboutName.font = .systemFont(ofSize: 12)
     aboutName.textColor = .secondaryLabelColor
     footer.addArrangedSubview(aboutName)
-    let repoURL = URL(string: "https://github.com/kovacsgellert/dock-numbers")!
+    let repoURL = URL(string: "https://github.com/kovacsgellert/dock-shortcuts-mac")!
     let repoLink = NSTextField(wrappingLabelWithString: "")
     repoLink.isEditable = false
     repoLink.isSelectable = true
     repoLink.preferredMaxLayoutWidth = 360
     repoLink.attributedStringValue = NSAttributedString(
-      string: "github.com/kovacsgellert/dock-numbers",
+      string: "github.com/kovacsgellert/dock-shortcuts-mac",
       attributes: [.link: repoURL, .font: NSFont.systemFont(ofSize: 12)]
     )
     // Selectable fields don't always fire links on single click — belt and braces.
@@ -317,7 +317,7 @@ final class SettingsWindowController: NSWindowController {
   }
 
   @objc private func openRepo(_: NSGestureRecognizer) {
-    NSWorkspace.shared.open(URL(string: "https://github.com/kovacsgellert/dock-numbers")!)
+    NSWorkspace.shared.open(URL(string: "https://github.com/kovacsgellert/dock-shortcuts-mac")!)
   }
 
   @objc private func appearanceChanged(_ sender: NSPopUpButton) {

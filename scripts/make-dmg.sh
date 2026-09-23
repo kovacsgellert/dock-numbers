@@ -1,18 +1,18 @@
 #!/bin/bash
-# Build a drag-to-Applications DMG from dist/dock-numbers.app.
+# Build a drag-to-Applications DMG from dist/DockShortcuts.app.
 # Usage: ./scripts/make-dmg.sh   (run package-app.sh first)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
 VERSION="${VERSION:-$(git -C "$ROOT" describe --tags --always 2>/dev/null || echo 0.0.0-dev)}"
-APP="$OUT/dock-numbers.app"
+APP="$OUT/DockShortcuts.app"
 STAGE="$OUT/dmg-stage"
-DMG="$OUT/dock-numbers-$VERSION-macos-arm64.dmg"
+DMG="$OUT/dock-shortcuts-$VERSION-macos-arm64.dmg"
 
 test -d "$APP" || { echo "ERROR: $APP not found, run scripts/package-app.sh first" >&2; exit 1; }
 rm -rf "$STAGE" "$DMG"
 mkdir -p "$STAGE"
 cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "dock-numbers" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+hdiutil create -volname "DockShortcuts" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 echo "Wrote $DMG"
