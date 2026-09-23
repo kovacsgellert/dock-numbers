@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- Rename to DockShortcuts (`dock-shortcuts-mac`): new bundle id
+  `com.kovacsgellert.dock-shortcuts`, settings migrate automatically
+  from the old config location
+
 ## 0.2.0
 
 - Always-visible: holding Option no longer pops badges out (no visible change)
